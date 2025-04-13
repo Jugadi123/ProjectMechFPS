@@ -56,6 +56,6 @@
         "temp/": true,
         "Temp/": true
     },
-    "dotnet.defaultSolution": "MECH FPS.sln",
+    "dotnet.defaultSolution": "ProjectMechFPS.sln",
     "git.ignoreLimitWarning": true
 }
