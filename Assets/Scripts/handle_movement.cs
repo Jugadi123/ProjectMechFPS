@@ -51,6 +51,7 @@ public class handle_movement : MonoBehaviour
     public float currentFuelAmount;
     public bool IsThrusting;
     public float thrusterGravity;
+    public float wallRunGravity;
     public bool IsDashing;
     public bool IsWalking;
     public bool runDashCooldown;
@@ -74,14 +75,12 @@ public class handle_movement : MonoBehaviour
 
     [Header("Wall Run Settings")]
     // wall running
-    public bool isWallRunning = false;
-    private Vector3 wallHitNormal;
-    private Vector3 wallRunDirection;
-    private Vector3 directionToWall;
-    private bool initialWallCheck = false;
-    private Ray rayDirection;
-    float stickingForce;
 
+    private bool IsWallRunReady = true;
+    private bool InWallRun = false;
+    private Vector3 wallHitNormal;
+    public Ray rayDirection;
+    public float stickingForce;
 
     // for cooldowns
     public bool canWallRun = false;
@@ -106,9 +105,6 @@ public class handle_movement : MonoBehaviour
 
 
 
-
-
-
     public float thrustersCooldown = 1f;
     public bool CanUseThrusters = true;
     
@@ -118,7 +114,7 @@ public class handle_movement : MonoBehaviour
 
         currentMoveState = MoveState.idle;
 
-        stickingForce = 0.5f;
+        stickingForce = 30f;
 
         interpolateClientSide = true;
         
@@ -129,12 +125,12 @@ public class handle_movement : MonoBehaviour
         playerAcceleration = 7f;
         playerDeceleration = 5f;
 
-        currentPlayerSpeed = 0f;
-        playerWalkSpeed = 6f;
+        playerWalkSpeed = 5f;
         playerDashSpeed = 30f;
         playerSprintSpeed = 10f;
+        currentPlayerSpeed = playerWalkSpeed;
 
-        gravity = -15f;
+        gravity = -9.81f;
         thrusterGravity = 20f;
         characterController = GetComponent<CharacterController>();
         characterController.minMoveDistance = 0;
@@ -148,7 +144,7 @@ public class handle_movement : MonoBehaviour
         thrusterFuelUsage = 43f;
         sprintingFuelUsage = 10f;
         dashTime = 0f;
-        dashCoolDown = 1f;
+        dashCoolDown = 0.5f;
 
         IsThrusting = false;
         IsOnGround = false;
@@ -192,8 +188,6 @@ public class handle_movement : MonoBehaviour
         dashKey = Input.GetKey(KeyCode.C);
         IsThrusting = Input.GetKey(KeyCode.Space);
     }
-
-
 
 
 
@@ -254,7 +248,7 @@ public class handle_movement : MonoBehaviour
     void HandleDashing() {
         // dashing logic
         // check conditions for a dash
-        if (!IsDashing && !runDashCooldown && dashKey)
+        if (!IsDashing && !runDashCooldown && dashKey && IsMovingHorizontally)
         {
             // setting IsDashing to true and limiting constant dashing
             IsDashing = true;
@@ -265,8 +259,7 @@ public class handle_movement : MonoBehaviour
         if (IsDashing) {
             // main dash logic
             // stored dash direction or control it in air if we are moving horizontally
-            currentPlayerVelocity = new Vector3(DashDirection.x, currentPlayerVelocity.y, DashDirection.z);
-
+            currentPlayerVelocity += new Vector3(DashDirection.x, 0f, DashDirection.z) * Time.fixedDeltaTime * 5f;
 
             // block sprinting and movement input while dashing
             sprintButton = false;
@@ -275,7 +268,7 @@ public class handle_movement : MonoBehaviour
             dashTime += Time.fixedDeltaTime;
 
             // once dash is done, run the cool down for it
-            if (dashTime > 0.4f) {
+            if (dashTime > 0.2f) {
                 dashTime = 0f;
                 IsDashing = false;
                 // start the cooldown
@@ -287,7 +280,7 @@ public class handle_movement : MonoBehaviour
         if (runDashCooldown) {
             dashCoolDown -= Time.fixedDeltaTime;
             if (dashCoolDown <= 0) {
-                dashCoolDown = 1f;
+                dashCoolDown = 0.5f;
                 runDashCooldown = false;
             }
         }
@@ -296,14 +289,14 @@ public class handle_movement : MonoBehaviour
 
     void HandleWallRunning() {
 
-        // if we are on the ground dont wall run
         if (IsOnGround) {
             return;
         }
 
-        // let's trace a ray from the player to their move direction and see if we hit a wall
-        int wallRunLayerMask = LayerMask.GetMask("Wall");
 
+        // wall detection
+
+        int wallRunLayerMask = LayerMask.GetMask("Wall");
 
         // im going to loop through 3 traces. One for the movedirection and one for right/left side
         // whichever trace hits a wall first, we will use that one
@@ -319,81 +312,78 @@ public class handle_movement : MonoBehaviour
             else if (i == 2) {
                 rayDirection = new Ray(transform.position, transform.right);
             }
-            initialWallCheck = Physics.Raycast(rayDirection, out RaycastHit hitInfo, 1f, wallRunLayerMask);
-            if (initialWallCheck) {
+
+            if (IsWallRunReady && Physics.Raycast(rayDirection, out RaycastHit hitInfo, 1f, wallRunLayerMask)) {
                 // let's say we start hit the wall and are in air
                 // we can start wall running
                 // Before we do that, let's store the normal of the wall we hit
                 wallHitNormal = hitInfo.normal;
-                isWallRunning = true;
+                InWallRun = true;
                 break;
             }
             else {
                 Debug.DrawRay(transform.position, rayDirection.direction, Color.white);
             }
         }
-    
 
-        // Once we begin wall running
-        if (isWallRunning) {
+        if (InWallRun)  
+        {
+            Vector3 dirTowall = -wallHitNormal;
 
-            // We get the normal of our wall and use that to move towards the wall
-            // This is done by getting the inverse of the normal
-            directionToWall = -wallHitNormal;
+            Vector3 wallRunDirection = Vector3.Cross(wallHitNormal, Vector3.up).normalized;
 
-            // going to trace another ray to stick us to the wall and check for continous wall detection
-            if (Physics.Raycast(transform.position, directionToWall, out RaycastHit newinfo, 1f, wallRunLayerMask)) {
-            }
-            else {
-                isWallRunning = false;
-                return;
-            }
+            bool DetectWall = Physics.Raycast(transform.position, dirTowall, out RaycastHit hitinfo, 1f, wallRunLayerMask);
 
-            // let's get the wall run direction to check for our player's alignment with the wall
-            wallRunDirection = -Vector3.Cross(wallHitNormal, Vector3.up);
+            if (DetectWall) {
 
+                currentPlayerSpeed = Mathf.Lerp(currentPlayerSpeed, playerSprintSpeed * 1.5f, Time.fixedDeltaTime * playerAcceleration);
 
-            // once we have the direction to the wall, we can move towards it and stick our player to it
-            // im keeping the y axis independent to not interfere with the player's y axis movement (up and down)
-            currentPlayerVelocity += new Vector3(
-                directionToWall.x * stickingForce,
-                0f,
-                directionToWall.z * stickingForce
-            ); // DELTA TIME MISSING
+                // we are on the wall
+                // let's stick the player to the wall
+                // float distanceToWall = Vector3.Distance(hitinfo.point + (wallHitNormal * 0.1f), transform.position);
+
+                float signedAngleDiff = Vector3.SignedAngle(horizontalMoveDirection, wallRunDirection, Vector3.up);
+
+                signedAngleDiff *= -1;
 
 
-            if (IsMovingHorizontally) {
-                gravity = 0f;
+                // get off the wall if player jumps with not mvi
+                if (canUseFuel & IsThrusting) {
+                    StartCoroutine(RunWallRunCooldown());
+                    currentPlayerVelocity.x = horizontalMoveDirection.x * currentPlayerSpeed * 1.5f;
+                    currentPlayerVelocity.z = horizontalMoveDirection.z * currentPlayerSpeed * 1.5f;
+                    return;
+                }
+
+
+                if (IsMovingHorizontally) {
+                    gravity = wallRunGravity;
+                    // // get off the wall if the player isn't aligned with the wall
+                    // if (signedAngleDiff > 0f && signedAngleDiff > 45f && signedAngleDiff < 135f) {
+                    
+                    //     StartCoroutine(RunWallRunCooldown());
+                    //     return;
+                    // }
+
+                    // INSTEAD OF DOING THAT DUMB SHIT, DONT' CAP AN ANGLE. IT'S A MECH AFTER ALL.
+                }
+                else {
+                    gravity = -9.81f;
+                }
+
+                currentPlayerVelocity.x += dirTowall.x * stickingForce * Time.fixedDeltaTime;
+                currentPlayerVelocity.z += dirTowall.z * stickingForce * Time.fixedDeltaTime;
                 
             }
             else {
-                gravity = -15f;
+                InWallRun = false;
             }
-
-
-            // check for movedirection angle
-            // signed to get side of the wall
-            float angleDiff = Vector3.SignedAngle(wallRunDirection, horizontalMoveDirection, Vector3.up);
-
-            // sitck the player only if they are aligned with the wall otherwise, let them fall
-            if (angleDiff < 0f) {
-                // Debug.Log("wall run");
-                if (!(angleDiff > -45f || angleDiff < -135f)) {
-                    isWallRunning = false;
-                    // StartCoroutine(RunWallRunCooldown());
-                    currentPlayerVelocity += new Vector3(
-                        directionToWall.x * stickingForce * 10,
-                        0f,
-                        directionToWall.z * stickingForce * 10
-                    ) * -1; // DELTA TIIME MISSING
-                }
-            }
-            
         }
         else {
-            gravity = -15f;
+            gravity = -9.81f;
         }
     }
+
 
 
     void HandleHorizontalMovement()
@@ -401,16 +391,31 @@ public class handle_movement : MonoBehaviour
         horizontalMoveDirection = (-transform.right * input.x - transform.forward * input.y).normalized;
         IsMovingHorizontally = horizontalMoveDirection.magnitude > 0.1f;
 
-        
-        HandleWallRunning();
-
+    
         HandleDashing();
 
-        if (!IsDashing && !isWallRunning) {
-            // the line below assumes no special movement is applied like dashing, wallrunning, etc
-            currentPlayerVelocity = Vector3.Lerp(currentPlayerVelocity, new Vector3(horizontalMoveDirection.x * playerWalkSpeed, currentPlayerVelocity.y, horizontalMoveDirection.z * playerWalkSpeed), Time.fixedDeltaTime * playerAcceleration);
+        if (IsDashing) {
+            return;
         }
 
+
+        // base movement
+        if (!IsMovingHorizontally)
+        {
+            currentPlayerSpeed = Mathf.Lerp(currentPlayerSpeed, 0f, Time.fixedDeltaTime * 1.5f);
+        }
+
+
+        if (!sprintButton && IsMovingHorizontally)
+        {
+            currentPlayerSpeed = playerWalkSpeed;
+        }
+
+        if (canUseFuel && sprintButton && IsMovingHorizontally) {
+            currentPlayerSpeed = playerSprintSpeed;
+        }
+
+        currentPlayerVelocity = Vector3.Lerp(currentPlayerVelocity, new Vector3(horizontalMoveDirection.x * currentPlayerSpeed, currentPlayerVelocity.y, horizontalMoveDirection.z * currentPlayerSpeed), Time.fixedDeltaTime * playerAcceleration);
 
     }
 
@@ -418,32 +423,21 @@ public class handle_movement : MonoBehaviour
     void HandleVerticalMovement()
     {
 
-        int groundLayerMask = LayerMask.GetMask("Map", "Wall");
+        IsOnGround = characterController.isGrounded;
 
-        IsOnGround = Physics.Raycast(transform.position, -transform.up, out RaycastHit groundHit, 1f, groundLayerMask);
-
-        // if not wall running, we can jump and gravity
-        if (!isWallRunning) {
-            if (canUseFuel && IsThrusting) {
-                // currentPlayerVelocity.y = 0f;
-                currentPlayerVelocity.y = thrusterGravity;
-                // currentPlayerVelocity.y = Mathf.Lerp(currentPlayerVelocity.y, thrusterGravity, Time.fixedDeltaTime * playerAcceleration);
+        if (canUseFuel && IsThrusting) {
+            // currentPlayerVelocity.y = 0f;
+            currentPlayerVelocity.y = Mathf.Lerp(currentPlayerVelocity.y, thrusterGravity, Time.fixedDeltaTime * playerAcceleration * 0.5f);
+        }
+        else {
+            if (IsOnGround) {
+                currentPlayerVelocity.y = -2f;
             }
             else {
-                if (IsOnGround) {
-                    currentPlayerVelocity.y = -2f;
-                }
-                else {
-                    if (currentPlayerVelocity.y > -15f)
-                    {
-                        currentPlayerVelocity.y += gravity * Time.fixedDeltaTime * 2f;
-                    }
-                    else {
-                        currentPlayerVelocity.y = -15f;
-                    }
-                }
+                currentPlayerVelocity.y += gravity * Time.fixedDeltaTime * playerAcceleration * 0.6f;
             }
         }
+        
     }
 
 
@@ -479,7 +473,7 @@ public class handle_movement : MonoBehaviour
         if (canUseFuel)
         {
             // sprinting/boosting logic
-            if (sprintButton && !IsDashing && (input.x != 0 || input.y != 0)) {
+            if (sprintButton && !IsDashing && IsMovingHorizontally) {
                 currentFuelAmount -= sprintingFuelUsage * Time.fixedDeltaTime;
             } 
             else if (IsThrusting) {
@@ -503,6 +497,11 @@ public class handle_movement : MonoBehaviour
         HandleVerticalMovement();
         HandleHorizontalMovement();
         HandleFuelSystem();
+
+        
+        if (!IsMovingHorizontally && currentPlayerSpeed < 0.1f) {
+            currentPlayerSpeed = 0f;
+        }
 
 
         // final interpolation
@@ -535,9 +534,10 @@ public class handle_movement : MonoBehaviour
     }
 
     IEnumerator RunWallRunCooldown() {
-        canWallRun = false;
-        yield return new WaitForSeconds(1f);
-        canWallRun = true;
+        InWallRun = false;
+        IsWallRunReady = false;
+        yield return new WaitForSeconds(0.8f);
+        IsWallRunReady = true;
     }
 
 }

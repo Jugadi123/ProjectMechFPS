@@ -37,5 +37,6 @@ public class Debugging : MonoBehaviour
     {
         AudioListener.volume = defaultVolume / 100;
     }
+
 }
 

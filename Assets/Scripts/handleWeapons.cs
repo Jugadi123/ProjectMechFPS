@@ -3,6 +3,11 @@ using UnityEngine;
 
 public class handleWeapons : MonoBehaviour
 {
+
+    private BaseWeapon newGun;
+
+
+
     [SerializeField] GameObject primaryMuzzleFlash;
     [SerializeField] GameObject secondaryMuzzleFlash;
     [SerializeField] AudioSource primaryWeaponSound;
@@ -23,11 +28,6 @@ public class handleWeapons : MonoBehaviour
     [SerializeField] float secondaryFireRate;
     private float primaryFireCoolDown = 0f;
     private float secondaryFireCoolDown = 0f;
-    private bool[] mouseClick;
-    public int ammo;
-    public bool hasEnoughAmmo = true;
-    public bool startReloading = false;
-    public float reloadTimer = 3.0f;
     public RaycastHit hitInfo;
     public RaycastHit hitInfoLOS;
     private Vector3 rayOrigin;
@@ -35,11 +35,36 @@ public class handleWeapons : MonoBehaviour
     private bool doPrimaryWeaponVFXNextFrame = false;
     private bool doSecondaryWeaponVFXNextFrame = false;
 
+
+    [Header("Overheating Related")]
+    public bool PrimaryOverheated = false;
+    public bool SecondaryOverheated = false;
+    public float primaryHeatCoolDown;
+    public float secondaryHeatCoolDown;
+
+    private float maxHeat;
+    public float primaryCurrentHeat;
+    public float secondaryCurrentHeat;
+
+    public int shotID;
+
     void Start()
     {
+        newGun = new BaseWeapon(transform, 32, "Gixer", BaseWeapon.WeaponType.Hitscan, 100f, 0f, 500f, 0.05f, BaseWeapon.WeaponSide.Primary);
+
+
+        // Debug.Log("Weapon Info: " + newGun.weaponName + " " + newGun.weaponType + " " + newGun.weaponDamage + " " + newGun.weaponSpread + " " + newGun.weaponFireRate + " " + newGun.weaponHeatUsage + " " + newGun.weaponSide);
+
+
+
+        primaryHeatCoolDown = 3f;
+        secondaryHeatCoolDown = 3f;
+        primaryCurrentHeat = 0f;
+        secondaryCurrentHeat = 0f;
+        maxHeat = 100f;
+        shotID = 0;
         primaryMuzzleFlash.SetActive(false);
         secondaryMuzzleFlash.SetActive(false);
-        ammo = 10000;
         primaryFireRate = 500f; // rounds per minute
         secondaryFireRate = 50f; // rounds per minute
     }
@@ -53,10 +78,9 @@ public class handleWeapons : MonoBehaviour
 
     void Update() // really only for input because server tickrate would run the rest of the game logic
     {
-        mouseClick = new bool[] { Input.GetKey(KeyCode.Mouse0), Input.GetKey(KeyCode.Mouse1) };
+        primaryFire = Input.GetKey(KeyCode.Mouse0);
+        secondaryFire = Input.GetKey(KeyCode.Mouse1);
 
-        secondaryFire = mouseClick[0];
-        primaryFire = mouseClick[1];
 
         if (doPrimaryWeaponVFXNextFrame) {
 
@@ -69,7 +93,7 @@ public class handleWeapons : MonoBehaviour
             // render tracers every 3 or so bullets for automatic guns for clarity and performance
             // also check if we were holding down the fire button or spamming it like a semi auto weapon. 
             // this ammo and keydown check is only applicable to AUTOMATIC weapons.
-            if (ammo % 3 == 0 || Input.GetKeyDown(KeyCode.Mouse0)) {
+            if (shotID % 3 == 0 || Input.GetKeyDown(KeyCode.Mouse0)) {
                 // render the visual tracer in the world (for sniper, lasers and other gun alike)
                 StartCoroutine(RenderTracer("gun", primaryMuzzleFlash.transform.position, (hitInfo.point + hitInfo.normal * 0.1f), Quaternion.LookRotation(hitInfo.point - primaryMuzzleFlash.transform.position)));
             }
@@ -111,21 +135,6 @@ public class handleWeapons : MonoBehaviour
     void FixedUpdate()
     {
 
-        hasEnoughAmmo = ammo > 0;
-
-        if (!hasEnoughAmmo) {
-            startReloading = true;
-            Debug.Log("Reloading...hang on!");
-        }
-
-        if (startReloading) {
-            reloadTimer -= Time.fixedDeltaTime;
-            if (reloadTimer <= 0) {
-                ammo = 30;
-                startReloading = false;
-                reloadTimer = 3.0f;
-            }
-        }
 
         rayOrigin = mainCamera.transform.position;
 
@@ -143,26 +152,83 @@ public class handleWeapons : MonoBehaviour
         // else {
         //     Debug.DrawRay(rayOrigin, rayDirection * 1000f, Color.blue);
         // }
-
-
-
-
     
         primaryFireCoolDown -= Time.fixedDeltaTime;
         secondaryFireCoolDown -= Time.fixedDeltaTime;
 
+
+
+
+
+        // primary fire logic (if it was semi automatic)
+        // always keep reducing heat if the gun isn't fully overheated
+        if (!PrimaryOverheated) {
+            primaryCurrentHeat -= Time.fixedDeltaTime * 2f;
+        }
+
+
+        // overheat cooldown management
+        if (PrimaryOverheated) {
+            primaryHeatCoolDown -= Time.fixedDeltaTime;
+            if (primaryHeatCoolDown <= 0f) {
+                PrimaryOverheated = false; // stop the cool down from continuing
+                primaryCurrentHeat = 0f; // reset heat
+                primaryHeatCoolDown = 3f; // reset the cooldown
+            }
+        }
+
+
+
+        // secondary fire logic (if it was semi automatic)
+
+        // always keep reducing heat if the gun isn't fully overheated
+        if (!SecondaryOverheated) {
+            secondaryCurrentHeat -= Time.fixedDeltaTime * 2f;
+        }
+
+
+        // overheat cooldown management
+        if (SecondaryOverheated) {
+            secondaryHeatCoolDown -= Time.fixedDeltaTime;
+            if (secondaryHeatCoolDown <= 0f) {
+                SecondaryOverheated = false; // stop the cool down from continuing
+                secondaryCurrentHeat = 0f; // reset heat
+                secondaryHeatCoolDown = 3f; // reset the cooldown
+            }
+        }
+
+        // '~' meaning interact with everything but the specified layers
+        int myMask = ~LayerMask.GetMask("Localplayer Mask", "SpawnPoint Mask");
+
+
+
+        // primary fire logic
         if (primaryFire) {
-            if (primaryFireCoolDown <= 0f && hasEnoughAmmo)
+            if (primaryFireCoolDown <= 0f)
             {
-                ammo -= 1;
+
+                // increment heat if not overheated
+                if (!PrimaryOverheated) {
+                    primaryCurrentHeat += 0.03f * 100f;
+                    if (primaryCurrentHeat >= 100f) {
+                        PrimaryOverheated = true;
+                    }
+                }
+
+
+                if (PrimaryOverheated) {
+                    return;
+                }
+
+
+                // increment shotID
+                shotID++;
 
                 // ACTUAL WEAPON RECOIL
                 // any recoil logic here before a ray is casted
                 rayDirection = SpreadDirection(rayDirection, 0.3f);
 
                 // RAYCASTING LOGIC
-                // '~' meaning interact with everything but the specified layers
-                int myMask = ~LayerMask.GetMask("Localplayer Mask", "SpawnPoint Mask");
                 bool rayHit = Physics.Raycast(rayOrigin, rayDirection, out hitInfo, 1000f, myMask);
          
                 // if we hit something
@@ -184,10 +250,13 @@ public class handleWeapons : MonoBehaviour
                     if (tag == "Player") {
                         enemy enemy = hitInfo.transform.GetComponent<enemy>();
                         if (enemy != null) {
-                            enemy.Takedamage(10f);
-                            if (!enemy.isAlive) {
-                                // OnPlayeDeath
-                                MatchManager.TriggerPlayerDeath(gameObject.name, objectWeHit.name);
+                            if (enemy.isAlive) {
+                                enemy.Takedamage(10f);
+                                Debug.Log(enemy.health);
+                                if (!enemy.isAlive) {
+                                    // OnPlayeDeath
+                                    MatchManager.TriggerPlayerDeath(gameObject.name, objectWeHit.name);
+                                }
                             }
                         }
                     }
@@ -205,17 +274,27 @@ public class handleWeapons : MonoBehaviour
             }
         }
 
-        // semi auto logic
         if (secondaryFire) {
-            if (hasEnoughAmmo && secondaryFireCoolDown <= 0f)
+            if (secondaryFireCoolDown <= 0f)
             {
-                ammo -= 1;
+
+                // increment heat by 20% if not overheated
+                if (!SecondaryOverheated) {
+                    secondaryCurrentHeat += 0.10f * 100f;
+                    if (secondaryCurrentHeat >= 100f) {
+                        SecondaryOverheated = true;
+                    }
+                }
+
+
+                if (SecondaryOverheated) {
+                    return;
+                }
+
+
 
                 // no recoil for this specific type of gun (sniper). Doesn't make sense. Sway isn't needed either. I just want the player to feel the gun being shot but their accuracy should be 100% unless it's an smg or something.
 
-                // raycasting logic
-                // '~' meaning interact with everything but the specified layers
-                int myMask = ~LayerMask.GetMask("Localplayer Mask");
 
                 bool rayHit = Physics.Raycast(rayOrigin, rayDirection, out hitInfo, 1000f, myMask);
                 // convert a point into direction
@@ -233,6 +312,22 @@ public class handleWeapons : MonoBehaviour
                     Transform objectWeHit = hitInfo.collider.transform;
                     hole.transform.SetParent(objectWeHit);
                     Destroy(hole, 3f);
+
+
+                    string tag = objectWeHit.tag;
+                    if (tag == "Player") {
+                        enemy enemy = hitInfo.transform.GetComponent<enemy>();
+                        if (enemy != null) {
+                            enemy.Takedamage(35f);
+
+                            Debug.Log(enemy.health);
+                            if (!enemy.isAlive) {
+                                // OnPlayeDeath
+                                MatchManager.TriggerPlayerDeath(gameObject.name, objectWeHit.name);
+                            }
+                        }
+                    }
+
                 }
                 else {
                     Debug.DrawRay(rayOrigin, rayDirection * 1000f, Color.blue, 3f);
@@ -245,7 +340,13 @@ public class handleWeapons : MonoBehaviour
                 doSecondaryWeaponVFXNextFrame = true;
             }
         }
+
+        primaryCurrentHeat = Mathf.Clamp(primaryCurrentHeat, 0f, 100f);
+        secondaryCurrentHeat = Mathf.Clamp(secondaryCurrentHeat, 0f, 100f);
+
     }
+
+
 
     IEnumerator RenderTracer(string weaponType, Vector3 origin, Vector3 endPoint, Quaternion lookRotation)
     {

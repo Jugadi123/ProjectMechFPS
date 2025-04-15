@@ -33,9 +33,8 @@ public class handleMouseRotation : MonoBehaviour
         xRotation += mouse.y;
         xRotation = Mathf.Clamp(xRotation, -60f, 60f);
         yRotation += mouse.x;
-   
-        // normalize yaw
-        // yRotation = (yRotation + 360f) % 360f;
+        yRotation = (yRotation + 360f) % 360f;
+
         transform.rotation = Quaternion.Euler(0f, yRotation, 0f); // yaw
         upperBody.localRotation = Quaternion.Euler(xRotation, 0f, 0f); // pitch
 

@@ -8,7 +8,7 @@ using UnityEngine.SceneManagement;
 // hello world!
 public class GameManager : MonoBehaviour {
     
-    public static GameManager Instance;
+    public static GameManager instance;
 
     public enum GameStates
     {
@@ -25,13 +25,13 @@ public class GameManager : MonoBehaviour {
     {
 
         Debug.Log("hello from game state manager");
-        if (Instance != null && Instance != this) {
+        if (instance != null && instance != this) {
             Debug.Log("Found instance duplicate! Destroying...");
             Destroy(gameObject); // Avoid duplicates
             return;
         }
 
-        Instance = this;
+        instance = this;
         DontDestroyOnLoad(gameObject);
         UpdateGameState(GameStates.MainMenu); // start with main menu
     }
@@ -56,7 +56,7 @@ public class GameManager : MonoBehaviour {
 
         }
         else if (state == GameStates.MatchLive) {
-            SceneManager.LoadSceneAsync("SampleScene");
+            SceneManager.LoadSceneAsync("GameScene");
         }
         else if (state == GameStates.MatchEnd) {
             // load back into main menu once the match is over.

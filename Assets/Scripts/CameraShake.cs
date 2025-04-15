@@ -113,15 +113,20 @@ public class CameraShake : MonoBehaviour
             Vector3 targetAngles = GetLeanRotation(2f);
             mainCamera.transform.localRotation = Quaternion.Lerp(mainCamera.transform.localRotation, Quaternion.Euler(targetAngles), Time.deltaTime * 5f);
             // cockpitCamera.transform.localRotation = Quaternion.Lerp(cockpitCamera.transform.localRotation, Quaternion.Euler(targetAngles), Time.deltaTime * 5f);
+
+            bobTimer += Time.deltaTime * bobSpeed * 1.2f;
+            float bobOffset = Mathf.Sin(bobTimer) * bobAmount * 1.2f;
+            
+            Quaternion bobAngles = Quaternion.Euler(bobOffset, targetAngles.y, targetAngles.z);
+
+            cockpitCamera.transform.localRotation = Quaternion.Lerp(cockpitCamera.transform.localRotation, bobAngles, Time.deltaTime * bobSpeed);
+            mainCamera.transform.localRotation = Quaternion.Lerp(mainCamera.transform.localRotation, bobAngles, Time.deltaTime * bobSpeed);
+
+
         }
         else {
-            // prevent messing with an already on going rotation 
-
-        
             mainCamera.transform.localRotation = Quaternion.Lerp(mainCamera.transform.localRotation, Quaternion.Euler(defaultRotation), Time.deltaTime * 5f);
             // cockpitCamera.transform.localRotation = Quaternion.Lerp(cockpitCamera.transform.localRotation, Quaternion.Euler(defaultRotation), Time.deltaTime * 5f);
-
-
         }
 
 
@@ -135,7 +140,9 @@ public class CameraShake : MonoBehaviour
                 Vector3 originalAnglesCamera = defaultRotation;
                 Vector3 targetAnglesCamera = GetLeanRotation(2f);
                 Vector3 originalAnglesCockpit = defaultRotation;
-                StartCoroutine(RotateCamera(originalAnglesCockpit, -targetAnglesCamera, duration, cockpitCamera.transform));
+                Vector3 targetAnglesCockpit = GetLeanRotation(3f);
+
+                StartCoroutine(RotateCamera(originalAnglesCockpit, -targetAnglesCockpit, duration, cockpitCamera.transform));
                 StartCoroutine(RotateCamera(originalAnglesCamera, targetAnglesCamera, duration, mainCamera.transform));
             }
         }
@@ -177,6 +184,8 @@ public class CameraShake : MonoBehaviour
 
             yield return null; // wait for next frame
         }
+
+        camera.localRotation = Quaternion.Slerp(camera.localRotation, Quaternion.Euler(originalAngles), Time.deltaTime * 5f);
         currentRotationRoutine = null; // clear reference
     }
 

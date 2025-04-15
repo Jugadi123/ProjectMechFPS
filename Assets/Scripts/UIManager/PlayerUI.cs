@@ -71,10 +71,10 @@ class PlayerUI : MonoBehaviour {
             Takedamage(10);
         }
 
-        weaponAmmoText = (weaponInfo.ammo + " / ∞").ToString();
-        if (weaponInfo.startReloading) {
-            weaponAmmoText = "Reloading...";
-        }
+        // weaponAmmoText = (weaponInfo.ammo + " / ∞").ToString();
+        // if (weaponInfo.startReloading) {
+        //     weaponAmmoText = "Reloading...";
+        // }
 
         // roundTime = MatchManager.Instance.roundTimeSeconds;
         // string formattedRoundTimer = string.Format("{0:00}:{1:00}", roundTime / 60, roundTime % 60);
@@ -222,7 +222,7 @@ class PlayerUI : MonoBehaviour {
         ammoLebelStyle.fontSize = 20;
         ammoLebelStyle.alignment = TextAnchor.MiddleCenter;
         ammoLebelStyle.fontStyle = FontStyle.Bold;
-        GUI.Label(weaponInfoRect, weaponAmmoText, ammoLebelStyle);
+        // GUI.Label(weaponInfoRect, weaponAmmoText, ammoLebelStyle);
 
     }
 }
