@@ -2,9 +2,9 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEditor;
-using System.Collections.Generic;
 
-public class mainMenuUIManager : MonoBehaviour {
+
+public class mainMenuUIManager : MonoBehaviour  {
 
     public static mainMenuUIManager instance;
 
@@ -15,44 +15,7 @@ public class mainMenuUIManager : MonoBehaviour {
         InGame,
     }
 
-    private bool UIGameStartButton;
-    public bool UIGameSettingsButton;
-    public bool UIGameLoadoutSelectButton;
-    public bool UIGameQuitButton;
-    public bool returnToMainMenuButton;
-
     public UISTATE currentUIState;
-
-    public int loadoutSelected;
-    int numberOfAllowedLoadouts = 7;
-
-
-    public class LoadoutDetails {
-        public int id;
-        public string name;
-        public int[] weaponIDs; // array of weapon ids max of 2 (primary and secondary)
-    }
-
-    public List<LoadoutDetails> loudoutList = new List<LoadoutDetails>();
-
-    public Texture2D smgIcon;
-    public Texture2D shotgunIcon;
-    public Texture2D rifleIcon;
-    public Texture2D pistolIcon;
-    public Texture2D sniperIcon;
-    public Texture2D rocketLauncherIcon;
-    public Vector2 ScreenCenter;
-    public GUIStyle globalButtonStyle;
-
-    private Vector2 scrollPosition = Vector2.zero;
-
-
-    private string[] ButtonLabels = new string[] {"Loadout 0", "Loadout 1", "Loadout 2", "Loadout 3", "Loadout 4", "Loadout 5", "Loadout 6", "Loadout 7"};
-    public int ButtonHeight = 50;
-    public int ButtonWidth = 100;
-    public int ButtonSpacing = 10;
-    
-
 
     void Awake()
     {
@@ -72,14 +35,157 @@ public class mainMenuUIManager : MonoBehaviour {
         }
     }
 
+    // home menu elements
+    private bool UIGameStartButton;
+    public bool UIGameSettingsButton;
+    public bool UIGameLoadoutSelectButton;
+    public bool UIGameQuitButton;
+    public bool returnToMainMenuButton;
+
+    // loadout menu elements
+
+    Rect LoadoutMasterContainer;
+    Rect LoadoutSelectContainer;
+    Rect LoudoutDetailsContainer;
+    Rect LoudoutUtilsInfoContainer;
+    Rect LoudoutPrimaryWeaponInfoContainer;
+    Rect LoudoutSecondaryWeaponInfoContainer;
+
+
+
+    public int selectedLoudoutIndex;
+
+    public enum WeaponHitType {
+        HitScan,
+        Projectile,
+    }
+
+    public enum WeaponClass {
+        SMG,
+        Shotgun,
+        Rifle,
+        Sniper,
+        RocketLauncher,
+        GrenadeLauncher,
+    }
+
+
+    public struct WeaponStats {
+        public int id;
+        public string name;
+        // public Texture2D icon; too much data to store. Instead I'll use a seperate function to retrieve the icon from the weapon's id
+        public string description;
+        public WeaponHitType type; // hitscan or projectile
+        public WeaponClass weaponClass; // SMG or Rifle, etc
+        public int damage;
+        public int fireRate;
+        public float heatUsage;
+    };
+
+    public class LoadoutDetails {
+        public int id;
+        public string name;
+        public WeaponStats primaryWeapon;
+        public WeaponStats secondaryWeapon;
+    }
+
+    public WeaponStats[] AllGameWeapons = new WeaponStats[6] {
+        new WeaponStats {
+            id = 0, 
+            name = "Rifle", 
+            description = "A mid-range rifle OP af.", 
+            type = WeaponHitType.HitScan, 
+            weaponClass = WeaponClass.Rifle, 
+            damage = 120, 
+            fireRate = 350, 
+            heatUsage = 26
+        },
+
+        new WeaponStats {
+            id = 1, 
+            name = "Rocketeer", 
+            description = "Basic rocket launcher", 
+            type = WeaponHitType.Projectile, 
+            weaponClass = WeaponClass.RocketLauncher, 
+            damage = 400,
+            fireRate = 100, 
+            heatUsage = 50
+        },
+
+        new WeaponStats {
+            id = 2, 
+            name = "SMG", 
+            description = "Of course it's a fucking smg.", 
+            type = WeaponHitType.HitScan, 
+            weaponClass = WeaponClass.SMG, 
+            damage = 80, 
+            fireRate = 500, 
+            heatUsage = 10
+        },
+
+        new WeaponStats {
+            id = 3, 
+            name = "Nade Launcher", 
+            description = "Thing that shoots grenades out.", 
+            type = WeaponHitType.Projectile, 
+            weaponClass = WeaponClass.GrenadeLauncher, 
+            damage = 100, 
+            fireRate = 200, 
+            heatUsage = 30
+        },
+
+        new WeaponStats {
+            id = 4, 
+            name = "Auto Shotty", 
+            description = "A death dealing automatic shotgun best at close range battles.", 
+            type = WeaponHitType.HitScan, 
+            weaponClass = WeaponClass.Shotgun, 
+            damage = 50, 
+            fireRate = 300, 
+            heatUsage = 20
+        },
+
+        new WeaponStats {
+            id = 5, 
+            name = "Long Range Sniper", 
+            description = "A long range heavy sniper. AWP from CS:GO.", 
+            type = WeaponHitType.HitScan,
+            weaponClass = WeaponClass.Sniper, 
+            damage = 200,
+            fireRate = 100,
+            heatUsage = 34
+        },
+    };
+
+
+    public LoadoutDetails[] AllLoudouts = new LoadoutDetails[6];
+
+
+    public Vector2 ScreenCenter;
+    public GUIStyle globalButtonStyle;
+    private Vector2 scrollPosition = Vector2.zero;
+
+    public int ButtonHeight = 50;
+    public int ButtonWidth = 100;
+    public int ButtonSpacing = 10;
+
     void Start()
     {
-        loadoutSelected = 0;
-        // fill the list of loadouts
-        for (int i = 0; i < numberOfAllowedLoadouts; i++) {
-            loudoutList.Add(new LoadoutDetails{id = i, name = "Loadout " + i, weaponIDs = new int[]{Random.Range(0, 10), Random.Range(0, 10)}});
-        }
+        // fill the loadouts with random stuff 
+        // normally the loadout data would be stored in a database and loaded from there.
+        for (int i = 0; i < AllLoudouts.Length; i++) {
+            // choose a random weapon for the primary weapon
+            WeaponStats randomWeapon = AllGameWeapons[Random.Range(0, AllGameWeapons.Length)];
+            // choose a random weapon for the secondary weapon
+            WeaponStats randomWeapon2 = AllGameWeapons[Random.Range(0, AllGameWeapons.Length)];
 
+            AllLoudouts[i] = new LoadoutDetails {
+                id = i,
+                name = "Loadout " + i,
+                primaryWeapon = randomWeapon,
+                secondaryWeapon = randomWeapon2
+            };
+        }
     }
 
 
@@ -106,12 +212,22 @@ public class mainMenuUIManager : MonoBehaviour {
     }
 
 
-    private void SelectDefaultLoadout(int index) {
-        Debug.Log("Loadout " + index + " selected");
+    public void DisplayLoadoutDetails() {
+        // get the weapon icon and info by it's id
+        LoadoutDetails loadout = AllLoudouts[selectedLoudoutIndex];
+
+        if (loadout == null) {
+            return;
+        }
+
+    }
+
+    public void SelectLoadout(int index) {
+        selectedLoudoutIndex = index;
     }
 
 
-    private void RenderLoadoutPanel() {
+    public void RenderLoadoutPanel() {
 
         Vector2 ScreenSize = new Vector2(Screen.width, Screen.height);
     
@@ -120,34 +236,32 @@ public class mainMenuUIManager : MonoBehaviour {
         returnToMainMenuButton = GUI.Button(returnToMainMenuButtonRect, "< Back", globalButtonStyle);
 
 
-        Rect LoadoutMasterContainer = new Rect(returnToMainMenuButtonRect.xMin, returnToMainMenuButtonRect.yMax, ScreenSize.x/2 + 150, ScreenSize.y/2 + 200);
+        LoadoutMasterContainer = new Rect(returnToMainMenuButtonRect.xMin, returnToMainMenuButtonRect.yMax, ScreenSize.x/2 + 150, ScreenSize.y/2 + 200);
         GUI.Box(LoadoutMasterContainer, "LOADOUT MASTER WRAPPER");
 
 
-        Rect LoadoutSelectContainer = new Rect(LoadoutMasterContainer.xMin, LoadoutMasterContainer.yMin + 50, LoadoutMasterContainer.width - LoadoutMasterContainer.width + 200, LoadoutMasterContainer.height - 50);
+        LoadoutSelectContainer = new Rect(LoadoutMasterContainer.xMin, LoadoutMasterContainer.yMin + 50, LoadoutMasterContainer.width - LoadoutMasterContainer.width + 200, LoadoutMasterContainer.height - 50);
         GUI.Label(LoadoutSelectContainer, "");
 
 
-        Rect LoudoutDetailsContainer = new Rect(LoadoutSelectContainer.xMax + 10, LoadoutSelectContainer.yMin, LoadoutMasterContainer.width - LoadoutSelectContainer.width - 10, LoadoutSelectContainer.height);
+        LoudoutDetailsContainer = new Rect(LoadoutSelectContainer.xMax + 10, LoadoutSelectContainer.yMin, LoadoutMasterContainer.width - LoadoutSelectContainer.width - 10, LoadoutSelectContainer.height);
         // GUI.Box(LoudoutDetailsContainer, "DETAILS"); 
 
 
-        Rect LoudoutUtilsInfoContainer  = new Rect(LoudoutDetailsContainer.xMin, LoudoutDetailsContainer.yMax - 150, LoudoutDetailsContainer.width, 150);
+        LoudoutUtilsInfoContainer  = new Rect(LoudoutDetailsContainer.xMin, LoudoutDetailsContainer.yMax - 150, LoudoutDetailsContainer.width, 150);
         GUI.Box(LoudoutUtilsInfoContainer, "Utils/Abilities");
         
 
-        Rect LoudoutPrimaryWeaponInfoContainer  = new Rect(LoudoutDetailsContainer.xMin + 10, LoudoutDetailsContainer.yMin + 10, LoudoutDetailsContainer.width/2 - 10, LoudoutDetailsContainer.height - LoudoutUtilsInfoContainer.height - 10*2);
+        LoudoutPrimaryWeaponInfoContainer  = new Rect(LoudoutDetailsContainer.xMin + 10, LoudoutDetailsContainer.yMin + 10, LoudoutDetailsContainer.width/2 - 10, LoudoutDetailsContainer.height - LoudoutUtilsInfoContainer.height - 10*2);
         GUI.Box(LoudoutPrimaryWeaponInfoContainer, "Primary Weapon");
 
 
-        Rect LoudoutSecondaryWeaponInfoContainer  = new Rect(LoudoutPrimaryWeaponInfoContainer.xMax + 10, LoudoutPrimaryWeaponInfoContainer.yMin, LoudoutPrimaryWeaponInfoContainer.width - 10, LoudoutPrimaryWeaponInfoContainer.height);
+        LoudoutSecondaryWeaponInfoContainer  = new Rect(LoudoutPrimaryWeaponInfoContainer.xMax + 10, LoudoutPrimaryWeaponInfoContainer.yMin, LoudoutPrimaryWeaponInfoContainer.width - 10, LoudoutPrimaryWeaponInfoContainer.height);
         GUI.Box(LoudoutSecondaryWeaponInfoContainer, "Secondary Weapon");
 
 
-
-
         // Calculate total content height
-        float contentHeight = ButtonLabels.Length * (ButtonHeight + ButtonSpacing);
+        float contentHeight = AllLoudouts.Length * (ButtonHeight + ButtonSpacing);
         bool needsScrolling = contentHeight > LoadoutSelectContainer.height;
         
         // Begin the scroll view
@@ -161,7 +275,7 @@ public class mainMenuUIManager : MonoBehaviour {
         
         // Draw buttons
         float yPos = 0;
-        for (int i = 0; i < ButtonLabels.Length; i++)
+        for (int i = 0; i < AllLoudouts.Length; i++)
         {
             Rect buttonRect = new Rect(
                 0,
@@ -169,10 +283,16 @@ public class mainMenuUIManager : MonoBehaviour {
                 LoadoutSelectContainer.width - (needsScrolling ? 20 : 0),
                 ButtonHeight
             );
-            
-            if (GUI.Button(buttonRect, ButtonLabels[i]))
-            {
-                SelectDefaultLoadout(i);
+
+
+            if (AllLoudouts[i] != null) { // shit check. need to fix this
+
+                if (GUI.Button(buttonRect, AllLoudouts[i].name))
+                {
+                    // set the selected loadout index
+                    SelectLoadout(AllLoudouts[i].id);
+                }
+
             }
             
             yPos += ButtonHeight + ButtonSpacing;
@@ -180,13 +300,15 @@ public class mainMenuUIManager : MonoBehaviour {
         
         // End the scroll view
         GUI.EndScrollView();
+
+
+
+        // Render the loadout details
+        DisplayLoadoutDetails();
         
     }
 
-    void OnGUI()
-    {
-        
-
+    void RenderMainMenu() {
         globalButtonStyle = new GUIStyle(GUI.skin.button);
         globalButtonStyle.normal.textColor = Color.white;
         globalButtonStyle.fontSize = 14;
@@ -237,6 +359,10 @@ public class mainMenuUIManager : MonoBehaviour {
         if (currentUIState == UISTATE.LoudoutSelect) {
             RenderLoadoutPanel();
         }
+    }
 
+    void OnGUI()
+    {
+        // RenderMainMenu();
     }
 }
