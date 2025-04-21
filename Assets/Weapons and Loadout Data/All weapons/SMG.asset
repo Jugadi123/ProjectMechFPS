@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e5a083e059a7f49e3976016bf4b22a15, type: 3}
+  m_Name: SMG
+  m_EditorClassIdentifier: 
+  id: 4
+  Icon2D: {fileID: 21300000, guid: 3094003120fa144179b22c71a51608e3, type: 3}
+  weaponName: SMG
+  description: Of course it's a fucking smg.
+  type: 0
+  weaponClass: 0
+  damage: 30
+  fireRate: 500
+  heatUsage: 10

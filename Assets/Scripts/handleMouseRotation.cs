@@ -14,19 +14,24 @@ public class handleMouseRotation : MonoBehaviour
     public float xRotation = 0f;
     public float yRotation = 0f;
 
+    private PlayerUI playerUI;
+
     void Start()
     {
-        Cursor.lockState = CursorLockMode.Locked;
+        playerUI = GetComponent<PlayerUI>();
         mouseSensitivity = Debugging.instance.defaultMouseSensitivity;
     }
 
 
     void Update()
     {
-        MouseRotation();
+        if (!playerUI.IsMenuOpen) {
+            MouseRotation();
+        }
     }
-    void MouseRotation()
-    {
+
+
+    void MouseRotation() {
 
         mouse = new Vector2(Input.GetAxisRaw("Mouse X") * mouseSensitivity, Input.GetAxisRaw("Mouse Y") * mouseSensitivity);
 

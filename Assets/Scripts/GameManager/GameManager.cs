@@ -10,6 +10,8 @@ public class GameManager : MonoBehaviour {
     
     public static GameManager instance;
 
+    public ScriptableLoadout selectedLoadout;
+
     public enum GameStates
     {
         MainMenu,

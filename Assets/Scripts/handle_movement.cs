@@ -14,6 +14,9 @@ public class handle_movement : MonoBehaviour
     public AudioSource thrustersEndSound;
 
 
+    private PlayerUI playerUI;
+
+
     public enum MoveState {
         idle,
         walking,
@@ -111,6 +114,7 @@ public class handle_movement : MonoBehaviour
 
     void Start()
     {
+        playerUI = GetComponent<PlayerUI>();
 
         currentMoveState = MoveState.idle;
 
@@ -182,13 +186,14 @@ public class handle_movement : MonoBehaviour
 
     void HandleInput()
     {
-        pressedSpaceBar = Input.GetKey(KeyCode.Space);
-        input = new Vector3(Input.GetAxisRaw("Horizontal"), Input.GetAxisRaw("Vertical"), Input.GetAxisRaw("Jump"));
-        sprintButton = Input.GetKey(KeyCode.LeftShift);
-        dashKey = Input.GetKey(KeyCode.C);
-        IsThrusting = Input.GetKey(KeyCode.Space);
+        if (!playerUI.IsMenuOpen) {
+            pressedSpaceBar = Input.GetKey(KeyCode.Space);
+            input = new Vector3(Input.GetAxisRaw("Horizontal"), Input.GetAxisRaw("Vertical"), Input.GetAxisRaw("Jump"));
+            sprintButton = Input.GetKey(KeyCode.LeftShift);
+            dashKey = Input.GetKey(KeyCode.C);
+            IsThrusting = input.z > 0;
+        }
     }
-
 
 
     void HandleDashingAnimation()

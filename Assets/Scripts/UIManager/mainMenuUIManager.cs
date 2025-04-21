@@ -1,6 +1,7 @@
 
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 using UnityEditor;
 
 
@@ -28,11 +29,6 @@ public class mainMenuUIManager : MonoBehaviour  {
 
         instance = this;
         DontDestroyOnLoad(gameObject);
-
-        // check game state for main menu (if so, show all main menu UI (play, settings, maps select, inventory, etc))
-        if (GameManager.instance.CurrentGameState == GameManager.GameStates.MainMenu) {
-            currentUIState = UISTATE.Home;
-        }
     }
 
     // home menu elements
@@ -169,8 +165,11 @@ public class mainMenuUIManager : MonoBehaviour  {
     public int ButtonWidth = 100;
     public int ButtonSpacing = 10;
 
+
     void Start()
     {
+
+
         // fill the loadouts with random stuff 
         // normally the loadout data would be stored in a database and loaded from there.
         for (int i = 0; i < AllLoudouts.Length; i++) {
@@ -321,9 +320,9 @@ public class mainMenuUIManager : MonoBehaviour  {
 
             UIGameStartButton = GUI.Button(new Rect(100, ScreenCenter.y - 200, 200, 50), "Start Game", globalButtonStyle);
 
-        if (UIGameStartButton) {
-            SceneManager.LoadSceneAsync("GameScene");
-        }
+            if (UIGameStartButton) {
+                SceneManager.LoadSceneAsync("GameScene");
+            }
 
             UIGameLoadoutSelectButton = GUI.Button(new Rect(100, ScreenCenter.y - 100, 200, 50), "Select Loadout", globalButtonStyle);
 
@@ -359,10 +358,5 @@ public class mainMenuUIManager : MonoBehaviour  {
         if (currentUIState == UISTATE.LoudoutSelect) {
             RenderLoadoutPanel();
         }
-    }
-
-    void OnGUI()
-    {
-        // RenderMainMenu();
     }
 }

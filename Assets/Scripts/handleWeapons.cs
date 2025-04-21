@@ -4,8 +4,7 @@ using UnityEngine;
 public class handleWeapons : MonoBehaviour
 {
 
-    private BaseWeapon newGun;
-
+    private PlayerUI playerUI;
 
 
     [SerializeField] GameObject primaryMuzzleFlash;
@@ -48,12 +47,12 @@ public class handleWeapons : MonoBehaviour
 
     public int shotID;
 
+    public GameObject missilePrefab;
+
     void Start()
     {
-        newGun = new BaseWeapon(transform, 32, "Gixer", BaseWeapon.WeaponType.Hitscan, 100f, 0f, 500f, 0.05f, BaseWeapon.WeaponSide.Primary);
 
-
-        // Debug.Log("Weapon Info: " + newGun.weaponName + " " + newGun.weaponType + " " + newGun.weaponDamage + " " + newGun.weaponSpread + " " + newGun.weaponFireRate + " " + newGun.weaponHeatUsage + " " + newGun.weaponSide);
+        playerUI = GetComponent<PlayerUI>();
 
 
 
@@ -78,8 +77,11 @@ public class handleWeapons : MonoBehaviour
 
     void Update() // really only for input because server tickrate would run the rest of the game logic
     {
-        primaryFire = Input.GetKey(KeyCode.Mouse0);
-        secondaryFire = Input.GetKey(KeyCode.Mouse1);
+
+        if (!playerUI.IsMenuOpen) {
+            primaryFire = Input.GetKey(KeyCode.Mouse0);
+            secondaryFire = Input.GetKey(KeyCode.Mouse1);
+        }
 
 
         if (doPrimaryWeaponVFXNextFrame) {
@@ -292,46 +294,61 @@ public class handleWeapons : MonoBehaviour
                 }
 
 
+                // ----  ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- HITSCANS
 
-                // no recoil for this specific type of gun (sniper). Doesn't make sense. Sway isn't needed either. I just want the player to feel the gun being shot but their accuracy should be 100% unless it's an smg or something.
 
 
-                bool rayHit = Physics.Raycast(rayOrigin, rayDirection, out hitInfo, 1000f, myMask);
-                // convert a point into direction
+                // // no recoil for this specific type of gun (sniper). Doesn't make sense. Sway isn't needed either. I just want the player to feel the gun being shot but their accuracy should be 100% unless it's an smg or something.
+                // bool rayHit = Physics.Raycast(rayOrigin, rayDirection, out hitInfo, 1000f, myMask);
+                // // convert a point into direction
          
-                // if we hit something
-                if (rayHit) {
-                    Vector3 hitPointDirection = hitInfo.point - rayOrigin;
-                    Debug.DrawRay(rayOrigin, hitPointDirection, Color.red, 10f);
+                // // if we hit something
+                // if (rayHit) {
+                //     Vector3 hitPointDirection = hitInfo.point - rayOrigin;
+                //     Debug.DrawRay(rayOrigin, hitPointDirection, Color.red, 10f);
 
-                    GameObject impact = Instantiate(bulletImpact, hitInfo.point, Quaternion.LookRotation(hitPointDirection));
-                    Destroy(impact, 2f);
+                //     GameObject impact = Instantiate(bulletImpact, hitInfo.point, Quaternion.LookRotation(hitPointDirection));
+                //     Destroy(impact, 2f);
 
-                    GameObject hole = Instantiate(bulletHole, (hitInfo.point + hitInfo.normal * 0.1f), Quaternion.LookRotation(-hitInfo.normal));
+                //     GameObject hole = Instantiate(bulletHole, (hitInfo.point + hitInfo.normal * 0.1f), Quaternion.LookRotation(-hitInfo.normal));
 
-                    Transform objectWeHit = hitInfo.collider.transform;
-                    hole.transform.SetParent(objectWeHit);
-                    Destroy(hole, 3f);
+                //     Transform objectWeHit = hitInfo.collider.transform;
+                //     hole.transform.SetParent(objectWeHit);
+                //     Destroy(hole, 3f);
 
 
-                    string tag = objectWeHit.tag;
-                    if (tag == "Player") {
-                        enemy enemy = hitInfo.transform.GetComponent<enemy>();
-                        if (enemy != null) {
-                            enemy.Takedamage(35f);
+                //     string tag = objectWeHit.tag;
+                //     if (tag == "Player") {
+                //         enemy enemy = hitInfo.transform.GetComponent<enemy>();
+                //         if (enemy != null) {
+                //             enemy.Takedamage(35f);
 
-                            Debug.Log(enemy.health);
-                            if (!enemy.isAlive) {
-                                // OnPlayeDeath
-                                MatchManager.TriggerPlayerDeath(gameObject.name, objectWeHit.name);
-                            }
-                        }
-                    }
+                //             Debug.Log(enemy.health);
+                //             if (!enemy.isAlive) {
+                //                 // OnPlayeDeath
+                //                 MatchManager.TriggerPlayerDeath(gameObject.name, objectWeHit.name);
+                //             }
+                //         }
+                //     }
 
-                }
-                else {
-                    Debug.DrawRay(rayOrigin, rayDirection * 1000f, Color.blue, 3f);
-                }
+                // }
+                // else {
+                //     Debug.DrawRay(rayOrigin, rayDirection * 1000f, Color.blue, 3f);
+                // }
+
+
+
+                // ----  ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- HITSCANS
+
+
+
+
+
+
+                // SPAWN PROJECTILE
+                float spawnOffset = 0.5f;
+                SpawnProjectile(missilePrefab, secondaryMuzzleFlash.transform.position + (rayDirection.normalized * spawnOffset), rayDirection);
+
                 
                 // handle fire rat
                 secondaryFireCoolDown = 60f / secondaryFireRate;
@@ -346,6 +363,10 @@ public class handleWeapons : MonoBehaviour
 
     }
 
+    void SpawnProjectile(GameObject projectilePrefab, Vector3 position, Vector3 direction) {
+        Quaternion rotation = Quaternion.LookRotation(direction) * Quaternion.Euler(90f, 0, 0);
+        GameObject projectile = Instantiate(projectilePrefab, position, rotation);
+    }
 
 
     IEnumerator RenderTracer(string weaponType, Vector3 origin, Vector3 endPoint, Quaternion lookRotation)

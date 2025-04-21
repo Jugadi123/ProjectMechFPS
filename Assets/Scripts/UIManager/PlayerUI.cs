@@ -8,13 +8,13 @@ class PlayerUI : MonoBehaviour {
     [SerializeField] Texture2D crosshairTexture;
     private handle_movement handle_Movement;
 
+
     private float roundTime;
 
     private float oldHealth;
     public float health;
     private float newHealth;
     public bool isAlive;
-
 
     private string weaponAmmoText;
 
@@ -34,17 +34,24 @@ class PlayerUI : MonoBehaviour {
 
     [SerializeField] int fps;
 
+    private UIManager mainMenuManager;
+
+    public bool IsMenuOpen = false;
+
+    private bool MenuOpened = false;
+    private bool MenuClosed = false;
+
 
     void Awake()
     {
         health = 100f;
         newHealth = health;
         isAlive = true;
-
     }
 
     void Start()
     {
+        mainMenuManager = UIManager.instance;
         handle_Movement = GetComponent<handle_movement>();
         weaponInfo = GetComponent<handleWeapons>();
         crosshairHeight = 1f;        
@@ -63,13 +70,50 @@ class PlayerUI : MonoBehaviour {
         }
     }
 
-
     void Update()
     {
-        if (Input.GetKeyDown(KeyCode.V)) {
-            oldHealth = health;
-            Takedamage(10);
-        }
+        Cursor.lockState = CursorLockMode.Locked;
+
+
+        // if (Input.GetKeyDown(KeyCode.Escape)) {
+        //     IsMenuOpen = !IsMenuOpen;
+        // }
+
+        // if (IsMenuOpen) {
+        //     Cursor.lockState = CursorLockMode.None;
+
+        //     if (!MenuOpened) {
+        //         Debug.Log("Menu just opened!");
+        //         // always open the main menu first
+        //         mainMenuManager.currentPanelIndex = 0; 
+        //         mainMenuManager.ShowUpdatedPanel();
+        //         MenuOpened = true;
+        //     }
+        //     MenuClosed = false;
+        //     return;
+        // }
+        // else {
+
+        //     if (!MenuClosed) {
+        //         mainMenuManager.HideMainMenu();
+        //         MenuClosed = true;
+        //         Debug.Log("Menu just closed");
+        //     }
+
+        //     MenuOpened = false;
+        //     Cursor.lockState = CursorLockMode.Locked;
+        // }
+        
+        // if (Input.GetKeyDown(KeyCode.V)) {
+        //     oldHealth = health;
+        //     Takedamage(10);
+        // }
+
+
+
+
+
+
 
         // weaponAmmoText = (weaponInfo.ammo + " / ∞").ToString();
         // if (weaponInfo.startReloading) {
@@ -93,8 +137,12 @@ class PlayerUI : MonoBehaviour {
     // legacy renderer but idc because it gets the job done the quickest.
     void OnGUI()
     {
-        Rect weaponInfoRect = new Rect(Screen.width/2 + 300, Screen.height/2 + 180, 110, 30);
+        if (IsMenuOpen) {
+            return;
+        }
 
+
+        Rect weaponInfoRect = new Rect(Screen.width/2 + 300, Screen.height/2 + 180, 110, 30);
         Rect healthBarOuterRect = new Rect(Screen.width/2 - 400, Screen.height/2 + 180, 200, 15);
         Rect healthBarInnerRect = new Rect(Screen.width/2 - 398, Screen.height/2 + 182, healthPercentage * 196, 11);
         Rect healthTextRect = new Rect(Screen.width/2 - 400, Screen.height/2 + 170, 50, 11);
@@ -107,9 +155,6 @@ class PlayerUI : MonoBehaviour {
         healthLabelStyle.normal.textColor = healthLebelColor;
 
         GUI.Label(healthTextRect, healthText, healthLabelStyle);
-
-
-
 
         Rect fuelBarOuterRect = new Rect(Screen.width/2 - 100, Screen.height/2 + 180, 200, 30);
 

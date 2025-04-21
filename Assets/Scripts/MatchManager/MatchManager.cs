@@ -2,13 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.CompilerServices;
-using Autodesk.Fbx;
-using JetBrains.Annotations;
-using NUnit.Framework.Internal.Commands;
-using Unity.Mathematics;
 using UnityEngine;
-using UnityEngine.SocialPlatforms;
 
 public class MatchManager : MonoBehaviour
 {
@@ -53,6 +47,8 @@ public class MatchManager : MonoBehaviour
 
     void Start()
     {
+
+
         killid = 0;
 
         StartCoroutine(StartRoundTimer());
