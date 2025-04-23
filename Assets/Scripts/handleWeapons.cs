@@ -14,7 +14,6 @@ public class handleWeapons : MonoBehaviour
     [SerializeField] GameObject bulletHole;
     [SerializeField] GameObject bulletImpact;
     [SerializeField] GameObject Tracer;
-    [SerializeField] GameObject tracerTrail;
     [SerializeField] Transform upperBody;
     [SerializeField] Transform primaryWeapon;
     [SerializeField] Transform secondaryWeapon;
@@ -29,6 +28,12 @@ public class handleWeapons : MonoBehaviour
     private float secondaryFireCoolDown = 0f;
     public RaycastHit hitInfo;
     public RaycastHit hitInfoLOS;
+
+
+    private RaycastHit hitInfoGrenade;
+
+
+
     private Vector3 rayOrigin;
     private Vector3 rayDirection;
     private bool doPrimaryWeaponVFXNextFrame = false;
@@ -48,6 +53,8 @@ public class handleWeapons : MonoBehaviour
     public int shotID;
 
     public GameObject missilePrefab;
+    public GameObject grenadePrefab;
+
 
     void Start()
     {
@@ -144,7 +151,7 @@ public class handleWeapons : MonoBehaviour
 
 
         // tracing, drawing line of sight (debugging purposes)
-        // int myLOSMask = ~LayerMask.GetMask("Localplayer Mask", "SpawnPoint Mask");
+        // int myLOSMask = ~LayerMask.GetMask("Localplayer Mask");
         // bool rayLOSHit = Physics.Raycast(rayOrigin, rayDirection, out hitInfoLOS, 1000f, myLOSMask);
          
         // // if we hit something
@@ -200,7 +207,7 @@ public class handleWeapons : MonoBehaviour
         }
 
         // '~' meaning interact with everything but the specified layers
-        int myMask = ~LayerMask.GetMask("Localplayer Mask", "SpawnPoint Mask");
+        int myMask = ~LayerMask.GetMask("Localplayer Mask");
 
 
 
@@ -342,14 +349,61 @@ public class handleWeapons : MonoBehaviour
 
 
 
+                // SPAWN MISSILE
+
+                // int mask = ~LayerMask.GetMask("Projectiles&Bullets");
+                // bool rayHit = Physics.Raycast(rayOrigin, rayDirection, out hitInfo, 1000f, mask);
+                // // convert a point into direction
+         
+                // // if we hit something
+                // if (rayHit) {
+                //     Vector3 hitPointDirection = hitInfo.point - rayOrigin;
+                //     Debug.DrawRay(rayOrigin, hitPointDirection, Color.red, 3f);
+
+                //     float spawnOffset = 0.5f;
+                //     SpawnProjectile(missilePrefab, secondaryMuzzleFlash.transform.position + (rayDirection.normalized * spawnOffset), hitInfo.point - secondaryMuzzleFlash.transform.position);
+
+                // } else {
+                //     Debug.DrawRay(rayOrigin, rayDirection * 1000f, Color.blue, 3f);
+                // }
 
 
 
-                // SPAWN PROJECTILE
-                float spawnOffset = 0.5f;
-                SpawnProjectile(missilePrefab, secondaryMuzzleFlash.transform.position + (rayDirection.normalized * spawnOffset), rayDirection);
+                // SPAWN GRENADE
 
                 
+
+                float spawnOffset = 0.5f;
+
+                Vector3 grenadeStartPosition = secondaryMuzzleFlash.transform.position + (rayDirection * spawnOffset);
+
+                int mask = ~LayerMask.GetMask("Projectiles&Bullets");
+                bool rayHit = Physics.Raycast(rayOrigin, rayDirection, out hitInfo, 1000f, mask);
+
+                Vector3 grenadeFacingDirection = Vector3.zero;
+         
+                // if we hit something
+                if (rayHit) {
+
+                    Vector3 direction = hitInfo.point - grenadeStartPosition;
+                    grenadeFacingDirection = direction;
+
+                    Debug.DrawRay(grenadeStartPosition, direction, Color.green, 5f);
+
+                    Debug.DrawRay(rayOrigin, hitInfo.point - rayOrigin, Color.red, 5f);
+
+                } else {
+                    Debug.DrawRay(rayOrigin, rayDirection * 1000f, Color.blue, 5f);
+
+                    Vector3 directionOffset = rayOrigin + rayDirection * 1000f;
+                    grenadeFacingDirection = directionOffset - grenadeStartPosition;
+
+                    Debug.DrawRay(grenadeStartPosition, grenadeFacingDirection, Color.green, 5f);
+                }
+
+                SpawnGrenade(grenadePrefab, grenadeStartPosition, grenadeFacingDirection);
+
+
                 // handle fire rat
                 secondaryFireCoolDown = 60f / secondaryFireRate;
 
@@ -361,6 +415,12 @@ public class handleWeapons : MonoBehaviour
         primaryCurrentHeat = Mathf.Clamp(primaryCurrentHeat, 0f, 100f);
         secondaryCurrentHeat = Mathf.Clamp(secondaryCurrentHeat, 0f, 100f);
 
+    }
+
+
+    void SpawnGrenade(GameObject prefab, Vector3 startPosition, Vector3 direction) {
+        // GameObject projectile = Instantiate(prefab, startPosition, Quaternion.LookRotation(direction), transform); // version with the parent being assigned for custom projectile motion (getting the launch angle)
+        GameObject projectile = Instantiate(prefab, startPosition, Quaternion.LookRotation(direction));
     }
 
     void SpawnProjectile(GameObject projectilePrefab, Vector3 position, Vector3 direction) {

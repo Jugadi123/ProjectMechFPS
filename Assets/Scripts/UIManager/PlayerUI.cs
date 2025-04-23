@@ -2,12 +2,11 @@ using System;
 using Unity.Mathematics;
 using UnityEngine;
 class PlayerUI : MonoBehaviour {
-
+    
     [SerializeField] Camera cockpitCamera;
 
     [SerializeField] Texture2D crosshairTexture;
     private handle_movement handle_Movement;
-
 
     private float roundTime;
 
@@ -51,6 +50,7 @@ class PlayerUI : MonoBehaviour {
 
     void Start()
     {
+
         mainMenuManager = UIManager.instance;
         handle_Movement = GetComponent<handle_movement>();
         weaponInfo = GetComponent<handleWeapons>();
