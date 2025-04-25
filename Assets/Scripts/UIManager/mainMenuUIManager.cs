@@ -1,8 +1,6 @@
 
 using UnityEngine;
 using UnityEngine.SceneManagement;
-using UnityEngine.UI;
-using UnityEditor;
 
 
 public class mainMenuUIManager : MonoBehaviour  {
@@ -200,8 +198,8 @@ public class mainMenuUIManager : MonoBehaviour  {
             currentUIState = UISTATE.Settings;
         }
         else if (UIGameQuitButton ) {
-            // Application.Quit(0);
-            EditorApplication.isPlaying = false;
+            Application.Quit(0);
+            // UnityEditor.EditorApplication.isPlaying = false;
         }
     
         if (returnToMainMenuButton) {

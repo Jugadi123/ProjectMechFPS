@@ -41,19 +41,22 @@ public class handleWeapons : MonoBehaviour
 
 
     [Header("Overheating Related")]
+    public float maxHeat;
+    public float primaryCurrentHeat;
+    public float secondaryCurrentHeat;
     public bool PrimaryOverheated = false;
     public bool SecondaryOverheated = false;
     public float primaryHeatCoolDown;
     public float secondaryHeatCoolDown;
 
-    private float maxHeat;
-    public float primaryCurrentHeat;
-    public float secondaryCurrentHeat;
-
     public int shotID;
 
     public GameObject missilePrefab;
     public GameObject grenadePrefab;
+
+    // temp variable
+    public float currentWeaponSpread;
+    public float maxSpread = 2.0f;
 
 
     void Start()
@@ -77,9 +80,9 @@ public class handleWeapons : MonoBehaviour
 
     Vector3 SpreadDirection(Vector3 direction, float spread) // recoil basically
     {   
-        Quaternion randomAngle = Quaternion.Euler(Random.Range(-spread, spread), Random.Range(-spread, spread), 0f);
-        Vector3 randomized = randomAngle * direction;
-        return randomized;
+        // currentWeaponSpread = spread;
+        Quaternion spreadAngle = Quaternion.Euler(Random.Range(-currentWeaponSpread, currentWeaponSpread), Random.Range(-currentWeaponSpread, currentWeaponSpread), 0f);
+        return spreadAngle * direction;
     }
 
     void Update() // really only for input because server tickrate would run the rest of the game logic
@@ -89,7 +92,6 @@ public class handleWeapons : MonoBehaviour
             primaryFire = Input.GetKey(KeyCode.Mouse0);
             secondaryFire = Input.GetKey(KeyCode.Mouse1);
         }
-
 
         if (doPrimaryWeaponVFXNextFrame) {
 
@@ -148,25 +150,9 @@ public class handleWeapons : MonoBehaviour
         rayOrigin = mainCamera.transform.position;
 
         rayDirection = mainCamera.transform.forward;
-
-
-        // tracing, drawing line of sight (debugging purposes)
-        // int myLOSMask = ~LayerMask.GetMask("Localplayer Mask");
-        // bool rayLOSHit = Physics.Raycast(rayOrigin, rayDirection, out hitInfoLOS, 1000f, myLOSMask);
-         
-        // // if we hit something
-        // if (rayLOSHit) {
-        //     Debug.DrawRay(rayOrigin, hitInfoLOS.point - rayOrigin, Color.green);
-        // }
-        // else {
-        //     Debug.DrawRay(rayOrigin, rayDirection * 1000f, Color.blue);
-        // }
     
         primaryFireCoolDown -= Time.fixedDeltaTime;
         secondaryFireCoolDown -= Time.fixedDeltaTime;
-
-
-
 
 
         // primary fire logic (if it was semi automatic)
@@ -174,7 +160,6 @@ public class handleWeapons : MonoBehaviour
         if (!PrimaryOverheated) {
             primaryCurrentHeat -= Time.fixedDeltaTime * 2f;
         }
-
 
         // overheat cooldown management
         if (PrimaryOverheated) {
@@ -187,14 +172,11 @@ public class handleWeapons : MonoBehaviour
         }
 
 
-
         // secondary fire logic (if it was semi automatic)
-
         // always keep reducing heat if the gun isn't fully overheated
         if (!SecondaryOverheated) {
             secondaryCurrentHeat -= Time.fixedDeltaTime * 2f;
         }
-
 
         // overheat cooldown management
         if (SecondaryOverheated) {
@@ -216,19 +198,17 @@ public class handleWeapons : MonoBehaviour
             if (primaryFireCoolDown <= 0f)
             {
 
-                // increment heat if not overheated
-                if (!PrimaryOverheated) {
-                    primaryCurrentHeat += 0.03f * 100f;
-                    if (primaryCurrentHeat >= 100f) {
-                        PrimaryOverheated = true;
-                    }
-                }
-
-
                 if (PrimaryOverheated) {
                     return;
                 }
 
+                // increment heat if not overheated
+                if (!PrimaryOverheated) {
+                    primaryCurrentHeat += 0.03f * maxHeat;
+                    if (primaryCurrentHeat >= maxHeat) {
+                        PrimaryOverheated = true;
+                    }
+                }
 
                 // increment shotID
                 shotID++;
@@ -287,19 +267,17 @@ public class handleWeapons : MonoBehaviour
             if (secondaryFireCoolDown <= 0f)
             {
 
-                // increment heat by 20% if not overheated
-                if (!SecondaryOverheated) {
-                    secondaryCurrentHeat += 0.10f * 100f;
-                    if (secondaryCurrentHeat >= 100f) {
-                        SecondaryOverheated = true;
-                    }
-                }
-
-
                 if (SecondaryOverheated) {
                     return;
                 }
 
+                // increment heat by 20% if not overheated
+                if (!SecondaryOverheated) {
+                    secondaryCurrentHeat += 0.10f * maxHeat;
+                    if (secondaryCurrentHeat >= maxHeat) {
+                        SecondaryOverheated = true;
+                    }
+                }
 
                 // ----  ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- HITSCANS
 
@@ -412,8 +390,8 @@ public class handleWeapons : MonoBehaviour
             }
         }
 
-        primaryCurrentHeat = Mathf.Clamp(primaryCurrentHeat, 0f, 100f);
-        secondaryCurrentHeat = Mathf.Clamp(secondaryCurrentHeat, 0f, 100f);
+        primaryCurrentHeat = Mathf.Clamp(primaryCurrentHeat, 0f, maxHeat);
+        secondaryCurrentHeat = Mathf.Clamp(secondaryCurrentHeat, 0f, maxHeat);
 
     }
 

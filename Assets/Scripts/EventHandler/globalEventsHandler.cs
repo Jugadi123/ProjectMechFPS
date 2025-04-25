@@ -41,8 +41,8 @@ public class globalEventsHandler : MonoBehaviour {
 
     void HandleGameExit() {
         Debug.Log("Exiting Game...");
-        UnityEditor.EditorApplication.isPlaying = false;
-        // Application.Quit();
+        // UnityEditor.EditorApplication.isPlaying = false;
+        Application.Quit(0);
     }
 
 
