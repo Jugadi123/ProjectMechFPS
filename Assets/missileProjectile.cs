@@ -42,7 +42,7 @@ public class missileProjectile : MonoBehaviour
                     Debug.Log(enemy.health);
                     if (!enemy.isAlive) {
                         // OnPlayeDeath
-                        MatchManager.TriggerPlayerDeath(gameObject.name, collision.transform.name);
+                        
                     }
                 }
             }

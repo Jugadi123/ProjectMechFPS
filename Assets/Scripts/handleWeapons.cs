@@ -1,11 +1,7 @@
 using System.Collections;
 using UnityEngine;
-
 public class handleWeapons : MonoBehaviour
 {
-
-    private PlayerUI playerUI;
-
 
     [SerializeField] GameObject primaryMuzzleFlash;
     [SerializeField] GameObject secondaryMuzzleFlash;
@@ -61,11 +57,6 @@ public class handleWeapons : MonoBehaviour
 
     void Start()
     {
-
-        playerUI = GetComponent<PlayerUI>();
-
-
-
         primaryHeatCoolDown = 3f;
         secondaryHeatCoolDown = 3f;
         primaryCurrentHeat = 0f;
@@ -88,10 +79,8 @@ public class handleWeapons : MonoBehaviour
     void Update() // really only for input because server tickrate would run the rest of the game logic
     {
 
-        if (!playerUI.IsMenuOpen) {
-            primaryFire = Input.GetKey(KeyCode.Mouse0);
-            secondaryFire = Input.GetKey(KeyCode.Mouse1);
-        }
+        primaryFire = Input.GetKey(KeyCode.Mouse0);
+        secondaryFire = Input.GetKey(KeyCode.Mouse1);
 
         if (doPrimaryWeaponVFXNextFrame) {
 
@@ -145,7 +134,6 @@ public class handleWeapons : MonoBehaviour
 
     void FixedUpdate()
     {
-
 
         rayOrigin = mainCamera.transform.position;
 
@@ -243,8 +231,8 @@ public class handleWeapons : MonoBehaviour
                                 enemy.Takedamage(10f);
                                 Debug.Log(enemy.health);
                                 if (!enemy.isAlive) {
-                                    // OnPlayeDeath
-                                    MatchManager.TriggerPlayerDeath(gameObject.name, objectWeHit.name);
+                                    // OnPlayerDeath
+
                                 }
                             }
                         }

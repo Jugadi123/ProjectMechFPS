@@ -1,206 +1,157 @@
-using System;
+// This script is going to handle all networked logic once a map or game has loaded. This is assuming a matchmaker has connected clients and has transferred it's clients to this server and scene (matchmanager). Yes we will be using seperate server for player auth, matchmaking, and gameplay.
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using Unity.Netcode;
 
-public class MatchManager : MonoBehaviour
+[RequireComponent(typeof(NetworkObject))]
+public class MatchManager : NetworkBehaviour
 {
+    private static MatchManager Singleton;
 
-    public static MatchManager Instance;
+    [SerializeField] GameObject playerPrefab;
 
-    public float roundTimeSeconds = 120f;
+    private int minPlayersNeededForMatch;
 
-    public GameManager.GameStates CurrentMatchState;
+    public NetworkVariable<float> globalMatchCountDown = new NetworkVariable<float>();
 
-    // static array of respawn points
-    private GameObject[] allMapSpawnPoints;
+    private float globalMatchStartTime = 5f;
 
-    private List<Vector3> spawnLocations = new List<Vector3>();
+    public NetworkVariable<bool> IsMatchLive = new NetworkVariable<bool>(false);
 
-    // a dynamic list consisting of players that need/waiting to be respawned. 
-    public List<GameObject> allPlayers = new List<GameObject>();
+    [SerializeField] List<Transform> spawnPoints = new List<Transform>();
 
-    // events throughout the match
-    public static event Action<string, string> OnPlayeDeath;
 
-    public class KillFeedData {
-        public int id;
-        public string killMessage;
-        public float killTime;
-    }
-
-    public int killid;
-
-    private List<KillFeedData> KillFeedInfo = new List<KillFeedData>();
-
-    void Awake()
+    public override void OnNetworkSpawn()
     {
-        if (Instance != null && Instance != this) {
-            Debug.Log("Found instance duplicate! Destroying...");
+
+        Application.targetFrameRate = 70;
+        
+        // is this the server?
+        if (!IsServer) return;
+
+        // Singleton handling
+        if (Singleton != null && Singleton != this) {
             Destroy(gameObject); // Avoid duplicates
             return;
         }
+        
+        Singleton = this;
+        DontDestroyOnLoad(Singleton);
 
-        Instance = this;
+
+        // some placeholder messages
+
+        Debug.Log("Initialized Match Manager"); // display more details like map, number of players, game mode, match id, etc
+        Debug.Log("Waiting for players to join.");
+
+
+        // netvar init
+        globalMatchCountDown.Value = globalMatchStartTime;
+
+        // local var init
+        minPlayersNeededForMatch = 1;
+
+
+        // all event subs
+        NetworkManager.Singleton.OnClientConnectedCallback += OnClientConnected;
+        NetworkManager.Singleton.OnClientDisconnectCallback += OnClientDisconnected;
+        // NetworkManager.NetworkTickSystem.Tick += UpdateTickClientRpc;
+        globalMatchCountDown.OnValueChanged += GlobalMatchCountDownClientRpc;
+
     }
 
-    void Start()
+    public override void OnNetworkDespawn()
     {
-
-
-        killid = 0;
-
-        StartCoroutine(StartRoundTimer());
-        // get and store all respawn locations
-        allMapSpawnPoints = GameObject.FindGameObjectsWithTag("Respawn");
-
-        foreach (GameObject point in allMapSpawnPoints)
-        {
-            spawnLocations.Add(point.transform.position);
-        }
-
-        // at the start of the match or map load, add all players to a dynamic list
-        foreach (GameObject player in GameObject.FindGameObjectsWithTag("Player")) {
-            allPlayers.Add(player);
-        }
-
+        NetworkManager.Singleton.OnClientConnectedCallback -= OnClientConnected;
+        NetworkManager.Singleton.OnClientDisconnectCallback -= OnClientDisconnected;
     }
 
-    void FixedUpdate()
-    {
-        void PrepareRespawn(enemy stats, GameObject player) {
 
-            // find the best spawn location (check enemy dist)
-            
-            Vector3 bestSpawnLocation = Vector3.zero;
+    [ClientRpc]
+    private void GlobalMatchCountDownClientRpc(float previousValue, float newValue) {
+        // any ui updates, etc
+    }
 
-            foreach (Vector3 spawnPosition in spawnLocations)
-            {
-                foreach (GameObject playerf in allPlayers) {
-                    // ignore the player that needs to be respawned.
-                    if (playerf == gameObject) return;
-                    float distanceFromPlayer = Vector3.Distance(spawnPosition, playerf.transform.position);
+    // [ClientRpc]
+    // private void UpdateTickClientRpc() {
+    //     Debug.Log($"Server Tick: {NetworkManager.LocalTime.Tick}");
+    // }
 
-                    if (distanceFromPlayer > 30f) {
-                        Debug.Log(distanceFromPlayer);
-                        bestSpawnLocation = spawnPosition;
-                        break;
-                    }
-                }
-            }
 
-            // if a best location to spawn the player is found: spawn the player
+    [ClientRpc]
+    private void SendMessageClientRpc(string message) {
+        Debug.Log("Match Manager: " + message);
+    }
 
-            if (bestSpawnLocation != Vector3.zero) {
-                stats.isAlive = true;
-                stats.health = 100;
-                player.transform.position = bestSpawnLocation;
-                player.SetActive(true);
-                Debug.Log("Respawned: " + player.name);
-            }
+    private void OnClientConnected(ulong clientId) {
+        int totalClients = NetworkManager.Singleton.ConnectedClients.Count;
+        SendMessageClientRpc($"Client {clientId} Connected. Total Clients: {totalClients}");
+        // if enough players joined, start the match
+        if (totalClients >= minPlayersNeededForMatch) {
+            StartCoroutine(HandleMatchCountDown());
         }
-
-        foreach (GameObject player in allPlayers) {;
-
-            enemy enemy = player.GetComponent<enemy>();
-
-            if (enemy != null) {
-                // if not alive, begin respawning this dude
-                if (!enemy.isAlive) {
-                    PrepareRespawn(enemy, player);
-                }
-            }
-        }
-    }
-
-    public static void TriggerPlayerDeath(string victimName, string attackerName) {
-        OnPlayeDeath?.Invoke(victimName, attackerName);
-    }
-
-    void OnEnable()
-    {
-        OnPlayeDeath += StoreKillFeed;
-    }
-
-    void OnDisable()
-    {
-        OnPlayeDeath -= StoreKillFeed;
     }
     
-    void StoreKillFeed(string victimName, string attackerName ) {
-        killid++;
-        string message = "["+ killid + "] " + victimName + " killed " + attackerName;
-        KillFeedInfo.Add(new KillFeedData {
-            id = killid,
-            killMessage = message,
-            killTime = Time.time + 10f
-        });
+    private void OnClientDisconnected(ulong clientId) {
+        int totalClients = NetworkManager.Singleton.ConnectedClients.Count;
+        SendMessageClientRpc($"Client {clientId} Disconnected. Total Clients: {totalClients}");
     }
 
 
-    void DisplayKillFeed() {
-        Rect killfeedRect = new Rect(
-            new Vector2(Screen.width - 300, 50), 
-            new Vector2 (290, 200)
-        );
+    
+    private Transform? GetBestSpawnForPlayer() {
 
-        GUIStyle killfeedMessageStyle = new GUIStyle(GUI.skin.label);
-        killfeedMessageStyle.normal.textColor = Color.white;
-        killfeedMessageStyle.fontSize = 15;
-        killfeedMessageStyle.alignment = TextAnchor.MiddleLeft;
-
-        int maxMessageLength = 40;
-
-        // GUI.Box(killfeedRect, GUIContent.none);  // placeholder container
-
-        float defaultPositionY = killfeedRect.y;
-
-
-        if (KillFeedInfo.Count > 0) {
-            // limit the amount of text on the killfeed
-            if (KillFeedInfo.Count > 10) {
-                KillFeedInfo.RemoveAt(0);
-            }
-            
-            foreach (KillFeedData data in KillFeedInfo.ToList()) {
-                // checking the expiry time for the current killfeed
-                if (Time.time > data.killTime) {
-                    KillFeedInfo.Remove(data);
-                    continue;
-                }
-
-                defaultPositionY += 30f;
-
-                Rect killfeedMessageRect = new Rect(
-                    new Vector2(killfeedRect.x, defaultPositionY), 
-                    new Vector2 (290, 30)
-                );
-
-                // GUI.Box(killfeedMessageRect, GUIContent.none);  // placeholder container
-
-
-                string message = data.killMessage;
-
-                if (message.Length >= maxMessageLength) {
-                    string splitMessage = message.Substring(0, 40);
-                    message = splitMessage + "...";
-                }
-            
-                GUI.Label(killfeedMessageRect, message, killfeedMessageStyle);
-
-            }
+        // if there's atleast one spawn point available
+        if (!(spawnPoints.Count > 0)) {
+            return null;
         }
+
+        Transform bestSpawnFound = null;
+
+        // foreach (Transform spawn in spawnPoints) {
+
+        // }
+
+        bestSpawnFound = spawnPoints[(int)Random.Range(0, spawnPoints.Count - 1)];
+
+        return bestSpawnFound;
     }
 
-    void OnGUI() {
-        DisplayKillFeed();
-    }
+    IEnumerator HandleMatchCountDown() {
 
-    IEnumerator StartRoundTimer() {
-        while (roundTimeSeconds > 0f) {
-            yield return new WaitForSeconds(1f);
-            roundTimeSeconds -= 1f;
+        Debug.Log("Starting Match...");
+
+        while ((ushort)globalMatchCountDown.Value > 0) {
+            globalMatchCountDown.Value -= Time.fixedDeltaTime;
+            Debug.Log("Match Count Down: " + (ushort)globalMatchCountDown.Value);
+            yield return null;
+        }
+
+        // Ready to spawn all clients.
+        Debug.Log("Match Started!");
+        Debug.Log("Spawning Players!");
+
+        // contains networkclient objects
+        IReadOnlyList<NetworkClient> allConnectedClients = NetworkManager.ConnectedClientsList;
+
+        // check if there is atleast one spawn point available
+        foreach (NetworkClient client in allConnectedClients) {
+
+            ulong clientId = client.ClientId;
+
+            Transform? bestSpawn = GetBestSpawnForPlayer();
+
+            if (bestSpawn is null) {
+                continue;
+            }
+
+            Vector3 spawnLocation = bestSpawn.position;
+
+            GameObject player = Instantiate(playerPrefab, spawnLocation, Quaternion.identity);
+
+            player.GetComponent<NetworkObject>().SpawnAsPlayerObject(clientId);
         }
     }
 }

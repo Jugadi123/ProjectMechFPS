@@ -1,7 +1,8 @@
 ﻿
 using System.Collections;
 using UnityEngine;
-public class CameraShake : MonoBehaviour
+using Unity.Netcode;
+public class CameraShake : NetworkBehaviour
 {
     [SerializeField] Camera mainCamera; // main camera. NOT cockpit camera. That camera is only for the ui and cockpit layer.
 
@@ -25,12 +26,17 @@ public class CameraShake : MonoBehaviour
 
     private float verticalVelocity;
 
-    void Start()
+    public override void OnNetworkSpawn()
     {
+        if (!IsOwner) {
+            mainCamera.enabled = false;
+            cockpitCamera.enabled = false;
+            return;
+        }
+
         handle_movement = GetComponent<handle_movement>();
         defaultPos = Vector3.zero; // relative to upper body
         defaultRotation = new Vector3(0, 180, 0);
-        
         bobAmount = 0.3f;
         bobSpeed = 10f;
     }
@@ -53,7 +59,11 @@ public class CameraShake : MonoBehaviour
 
     void Update()
     {
-        
+
+        if (!IsOwner) {
+            return;
+        }
+
         // cockpit rotate while trusting
 
         if (handle_movement.IsThrusting) {
@@ -68,7 +78,6 @@ public class CameraShake : MonoBehaviour
 
 
         // screen shake on landing impact
-
         if (!handle_movement.IsOnGround)
         {
             verticalVelocity = handle_movement.currentPlayerVelocity.y;
@@ -92,7 +101,6 @@ public class CameraShake : MonoBehaviour
         if (handle_movement.IsOnGround && handle_movement.IsMovingHorizontally && !handle_movement.IsDashing && !handle_movement.sprintButton)
         {
             // camera bobs (walking)
-
             bobTimer += Time.deltaTime * bobSpeed;
             float bobOffset = Mathf.Sin(bobTimer) * bobAmount;
             

@@ -1,8 +1,8 @@
 using UnityEngine;
 using System.Collections;
-public class handle_movement : MonoBehaviour
+using Unity.Netcode;
+public class handle_movement : NetworkBehaviour
 {
-
     [Header("Transform References")]
     public CameraShake cameraShake;
     public Transform primaryWeapon;
@@ -12,9 +12,6 @@ public class handle_movement : MonoBehaviour
     public AudioSource thrustersStartSound;
     public AudioSource thrustersMidSound;
     public AudioSource thrustersEndSound;
-
-
-    private PlayerUI playerUI;
 
 
     public enum MoveState {
@@ -94,33 +91,18 @@ public class handle_movement : MonoBehaviour
     private bool isWaiting = false;
     private KeyCode lastKeyPressed;
 
-    // LEAVE THIS ALONE
-    // for client side interpolation of movement since our movement logic runs at a fixed rate or server tickrate
-    private Vector3 lastPlayerPosition;
-    private Vector3 currentPlayerPosition;
-    private float tickTimer = 0f;
-    [Header("Interpolation Settings")]
-    public bool interpolateClientSide = true;
-
-    // optional client side interpolation of rotation.
-    // LEAVE THIS ALONE
-
-
-
-
     public float thrustersCooldown = 1f;
     public bool CanUseThrusters = true;
-    
 
-    void Start()
+
+    // [Header("Interpolation Settings")]
+
+
+    public override void OnNetworkSpawn()
     {
-        playerUI = GetComponent<PlayerUI>();
-
         currentMoveState = MoveState.idle;
 
         stickingForce = 30f;
-
-        interpolateClientSide = true;
         
         cameraShake = GetComponent<CameraShake>();
         
@@ -160,7 +142,6 @@ public class handle_movement : MonoBehaviour
         IsDashing = false;
         IsMovingHorizontally = false;
 
-
         thrustersStartSound.loop = false;
         thrustersMidSound.loop = true;
         thrustersEndSound.loop = false;
@@ -186,18 +167,20 @@ public class handle_movement : MonoBehaviour
 
     void HandleInput()
     {
-        if (!playerUI.IsMenuOpen) {
+        if (IsOwner) {
             pressedSpaceBar = Input.GetKey(KeyCode.Space);
             input = new Vector3(Input.GetAxisRaw("Horizontal"), Input.GetAxisRaw("Vertical"), Input.GetAxisRaw("Jump"));
             sprintButton = Input.GetKey(KeyCode.LeftShift);
             dashKey = Input.GetKey(KeyCode.C);
             IsThrusting = input.z > 0;
         }
+
     }
 
 
-    void HandleDashingAnimation()
+    void HandleDashEffects()
     {
+        if (!IsOwner) return;
         if (IsDashing)
         {
             // rotate arms
@@ -224,29 +207,15 @@ public class handle_movement : MonoBehaviour
         }
     }
 
-    void InterpolateClientPosition() {
-        if (interpolateClientSide) {
-            tickTimer += Time.deltaTime;
-
-            float t = tickTimer / Time.fixedDeltaTime;
-            t = Mathf.Clamp01(t);
-
-            Vector3 interpolatedPos = Vector3.Lerp(lastPlayerPosition, currentPlayerPosition, t);
-            characterController.transform.position = interpolatedPos;
-        }
-    }
-
     void Update()
     {
         HandleInput();
-        HandleDashingAnimation();
-        InterpolateClientPosition();
+        HandleDashEffects();
     }
 
     void FixedUpdate()
     {
-        tickTimer = 0f;
-        HandleMovement();  
+        HandleMovement();    
     }
 
 
@@ -264,13 +233,13 @@ public class handle_movement : MonoBehaviour
         if (IsDashing) {
             // main dash logic
             // stored dash direction or control it in air if we are moving horizontally
-            currentPlayerVelocity += new Vector3(DashDirection.x, 0f, DashDirection.z) * Time.fixedDeltaTime * 5f;
+            currentPlayerVelocity += new Vector3(DashDirection.x, 0f, DashDirection.z) * Time.deltaTime * 5f;
 
             // block sprinting and movement input while dashing
             sprintButton = false;
             
             // keep moving for dash time
-            dashTime += Time.fixedDeltaTime;
+            dashTime += Time.deltaTime;
 
             // once dash is done, run the cool down for it
             if (dashTime > 0.2f) {
@@ -283,112 +252,13 @@ public class handle_movement : MonoBehaviour
 
         // Wait for cooldown to finish before dashing again
         if (runDashCooldown) {
-            dashCoolDown -= Time.fixedDeltaTime;
+            dashCoolDown -= Time.deltaTime;
             if (dashCoolDown <= 0) {
                 dashCoolDown = 0.5f;
                 runDashCooldown = false;
             }
         }
     }
-
-
-    void HandleWallRunning() {
-
-        if (IsOnGround) {
-            return;
-        }
-
-
-        // wall detection
-
-        int wallRunLayerMask = LayerMask.GetMask("Wall");
-
-        // im going to loop through 3 traces. One for the movedirection and one for right/left side
-        // whichever trace hits a wall first, we will use that one
-        // we will store that trace's normal
-
-        for (int i = 0; i < 3; i++) {
-            if (i == 0) {
-                rayDirection = new Ray(transform.position, horizontalMoveDirection);
-            }
-            else if (i == 1) {
-                rayDirection = new Ray(transform.position, -transform.right);
-            }
-            else if (i == 2) {
-                rayDirection = new Ray(transform.position, transform.right);
-            }
-
-            if (IsWallRunReady && Physics.Raycast(rayDirection, out RaycastHit hitInfo, 1f, wallRunLayerMask)) {
-                // let's say we start hit the wall and are in air
-                // we can start wall running
-                // Before we do that, let's store the normal of the wall we hit
-                wallHitNormal = hitInfo.normal;
-                InWallRun = true;
-                break;
-            }
-            else {
-                Debug.DrawRay(transform.position, rayDirection.direction, Color.white);
-            }
-        }
-
-        if (InWallRun)  
-        {
-            Vector3 dirTowall = -wallHitNormal;
-
-            Vector3 wallRunDirection = Vector3.Cross(wallHitNormal, Vector3.up).normalized;
-
-            bool DetectWall = Physics.Raycast(transform.position, dirTowall, out RaycastHit hitinfo, 1f, wallRunLayerMask);
-
-            if (DetectWall) {
-
-                currentPlayerSpeed = Mathf.Lerp(currentPlayerSpeed, playerSprintSpeed * 1.5f, Time.fixedDeltaTime * playerAcceleration);
-
-                // we are on the wall
-                // let's stick the player to the wall
-                // float distanceToWall = Vector3.Distance(hitinfo.point + (wallHitNormal * 0.1f), transform.position);
-
-                float signedAngleDiff = Vector3.SignedAngle(horizontalMoveDirection, wallRunDirection, Vector3.up);
-
-                signedAngleDiff *= -1;
-
-
-                // get off the wall if player jumps with not mvi
-                if (canUseFuel & IsThrusting) {
-                    StartCoroutine(RunWallRunCooldown());
-                    currentPlayerVelocity.x = horizontalMoveDirection.x * currentPlayerSpeed * 1.5f;
-                    currentPlayerVelocity.z = horizontalMoveDirection.z * currentPlayerSpeed * 1.5f;
-                    return;
-                }
-
-
-                if (IsMovingHorizontally) {
-                    gravity = wallRunGravity;
-                    // // get off the wall if the player isn't aligned with the wall
-                    // if (signedAngleDiff > 0f && signedAngleDiff > 45f && signedAngleDiff < 135f) {
-                    
-                    //     StartCoroutine(RunWallRunCooldown());
-                    //     return;
-                    // }
-
-                    // INSTEAD OF DOING THAT DUMB SHIT, DONT' CAP AN ANGLE. IT'S A MECH AFTER ALL.
-                }
-                else {
-                    gravity = -9.81f;
-                }
-
-                currentPlayerVelocity.x += dirTowall.x * stickingForce * Time.fixedDeltaTime;
-                currentPlayerVelocity.z += dirTowall.z * stickingForce * Time.fixedDeltaTime;
-                
-            }
-            else {
-                InWallRun = false;
-            }
-        }
-        else {
-            gravity = -9.81f;
-        }
-    }
-
 
 
     void HandleHorizontalMovement()
@@ -407,7 +277,7 @@ public class handle_movement : MonoBehaviour
         // base movement
         if (!IsMovingHorizontally)
         {
-            currentPlayerSpeed = Mathf.Lerp(currentPlayerSpeed, 0f, Time.fixedDeltaTime * 1.5f);
+            currentPlayerSpeed = Mathf.Lerp(currentPlayerSpeed, 0f, Time.deltaTime * 1.5f);
         }
 
 
@@ -420,7 +290,7 @@ public class handle_movement : MonoBehaviour
             currentPlayerSpeed = playerSprintSpeed;
         }
 
-        currentPlayerVelocity = Vector3.Lerp(currentPlayerVelocity, new Vector3(horizontalMoveDirection.x * currentPlayerSpeed, currentPlayerVelocity.y, horizontalMoveDirection.z * currentPlayerSpeed), Time.fixedDeltaTime * playerAcceleration);
+        currentPlayerVelocity = Vector3.Lerp(currentPlayerVelocity, new Vector3(horizontalMoveDirection.x * currentPlayerSpeed, currentPlayerVelocity.y, horizontalMoveDirection.z * currentPlayerSpeed), Time.deltaTime * playerAcceleration);
 
     }
 
@@ -432,14 +302,14 @@ public class handle_movement : MonoBehaviour
 
         if (canUseFuel && IsThrusting) {
             // currentPlayerVelocity.y = 0f;
-            currentPlayerVelocity.y = Mathf.Lerp(currentPlayerVelocity.y, thrusterGravity, Time.fixedDeltaTime * playerAcceleration * 0.5f);
+            currentPlayerVelocity.y = Mathf.Lerp(currentPlayerVelocity.y, thrusterGravity, Time.deltaTime * playerAcceleration * 0.5f);
         }
         else {
             if (IsOnGround) {
                 currentPlayerVelocity.y = -2f;
             }
             else {
-                currentPlayerVelocity.y += gravity * Time.fixedDeltaTime * playerAcceleration * 0.6f;
+                currentPlayerVelocity.y += gravity * Time.deltaTime * playerAcceleration * 0.6f;
             }
         }
         
@@ -455,7 +325,7 @@ public class handle_movement : MonoBehaviour
         if (currentFuelAmount <= 0f && waitingForRefuel)
         {
             // start the regen timer
-            fuelRegenStartTimer -= Time.fixedDeltaTime;
+            fuelRegenStartTimer -= Time.deltaTime;
 
             // if the timer runs out
             if (fuelRegenStartTimer <= 0f)
@@ -479,14 +349,14 @@ public class handle_movement : MonoBehaviour
         {
             // sprinting/boosting logic
             if (sprintButton && !IsDashing && IsMovingHorizontally) {
-                currentFuelAmount -= sprintingFuelUsage * Time.fixedDeltaTime;
+                currentFuelAmount -= sprintingFuelUsage * Time.deltaTime;
             } 
             else if (IsThrusting) {
-                currentFuelAmount -= thrusterFuelUsage * Time.fixedDeltaTime;
+                currentFuelAmount -= thrusterFuelUsage * Time.deltaTime;
             }
             else {
                 // normal fuel regen
-                currentFuelAmount += fuelRegen * Time.fixedDeltaTime;
+                currentFuelAmount += fuelRegen * Time.deltaTime;
                 // if fuel is more than max
                 if (currentFuelAmount > fuelMax)
                 {
@@ -499,26 +369,18 @@ public class handle_movement : MonoBehaviour
 
     void HandleMovement()
     {
-        HandleVerticalMovement();
-        HandleHorizontalMovement();
-        HandleFuelSystem();
+        if (IsOwner) {
+            HandleVerticalMovement();
+            HandleHorizontalMovement();
+            HandleFuelSystem();
 
-        
-        if (!IsMovingHorizontally && currentPlayerSpeed < 0.1f) {
-            currentPlayerSpeed = 0f;
+            if (!IsMovingHorizontally && currentPlayerSpeed < 0.1f) {
+                currentPlayerSpeed = 0f;
+            }
+
+            // apply movement finally
+            characterController.Move(currentPlayerVelocity * Time.deltaTime);
         }
-
-
-        // final interpolation
-
-        // get last position of player (for clientside interpolation)
-        lastPlayerPosition = currentPlayerPosition;
-
-        // apply movement finally
-        characterController.Move(currentPlayerVelocity * Time.fixedDeltaTime);
-
-        // store current position of player (for clientside interpolation)
-        currentPlayerPosition = transform.position;
     }
 
 
@@ -546,3 +408,108 @@ public class handle_movement : MonoBehaviour
     }
 
 }
+
+
+
+
+
+// saved wall running function (currently inactive)
+/*
+
+void HandleWallRunning() {
+
+    if (IsOnGround) {
+        return;
+    }
+
+
+    // wall detection
+
+    int wallRunLayerMask = LayerMask.GetMask("Wall");
+
+    // im going to loop through 3 traces. One for the movedirection and one for right/left side
+    // whichever trace hits a wall first, we will use that one
+    // we will store that trace's normal
+
+    for (int i = 0; i < 3; i++) {
+        if (i == 0) {
+            rayDirection = new Ray(transform.position, horizontalMoveDirection);
+        }
+        else if (i == 1) {
+            rayDirection = new Ray(transform.position, -transform.right);
+        }
+        else if (i == 2) {
+            rayDirection = new Ray(transform.position, transform.right);
+        }
+
+        if (IsWallRunReady && Physics.Raycast(rayDirection, out RaycastHit hitInfo, 1f, wallRunLayerMask)) {
+            // let's say we start hit the wall and are in air
+            // we can start wall running
+            // Before we do that, let's store the normal of the wall we hit
+            wallHitNormal = hitInfo.normal;
+            InWallRun = true;
+            break;
+        }
+        else {
+            Debug.DrawRay(transform.position, rayDirection.direction, Color.white);
+        }
+    }
+
+    if (InWallRun)  
+    {
+        Vector3 dirTowall = -wallHitNormal;
+
+        Vector3 wallRunDirection = Vector3.Cross(wallHitNormal, Vector3.up).normalized;
+
+        bool DetectWall = Physics.Raycast(transform.position, dirTowall, out RaycastHit hitinfo, 1f, wallRunLayerMask);
+
+        if (DetectWall) {
+
+            currentPlayerSpeed = Mathf.Lerp(currentPlayerSpeed, playerSprintSpeed * 1.5f, Time.deltaTime * playerAcceleration);
+
+            // we are on the wall
+            // let's stick the player to the wall
+            // float distanceToWall = Vector3.Distance(hitinfo.point + (wallHitNormal * 0.1f), transform.position);
+
+            float signedAngleDiff = Vector3.SignedAngle(horizontalMoveDirection, wallRunDirection, Vector3.up);
+
+            signedAngleDiff *= -1;
+
+            // get off the wall if player jumps with not mvi
+            if (canUseFuel & IsThrusting) {
+                StartCoroutine(RunWallRunCooldown());
+                currentPlayerVelocity.x = horizontalMoveDirection.x * currentPlayerSpeed * 1.5f;
+                currentPlayerVelocity.z = horizontalMoveDirection.z * currentPlayerSpeed * 1.5f;
+                return;
+            }
+
+
+            if (IsMovingHorizontally) {
+                gravity = wallRunGravity;
+                // // get off the wall if the player isn't aligned with the wall
+                // if (signedAngleDiff > 0f && signedAngleDiff > 45f && signedAngleDiff < 135f) {
+                
+                //     StartCoroutine(RunWallRunCooldown());
+                //     return;
+                // }
+
+                // INSTEAD OF DOING THAT DUMB SHIT, DONT' CAP AN ANGLE. IT'S A MECH AFTER ALL.
+            }
+            else {
+                gravity = -9.81f;
+            }
+
+            currentPlayerVelocity.x += dirTowall.x * stickingForce * Time.deltaTime;
+            currentPlayerVelocity.z += dirTowall.z * stickingForce * Time.deltaTime;
+            
+        }
+        else {
+            InWallRun = false;
+        }
+    }
+    else {
+        gravity = -9.81f;
+    }
+}
+
+*/

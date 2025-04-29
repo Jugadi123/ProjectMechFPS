@@ -36,7 +36,7 @@ public class grenadeProjectile : MonoBehaviour
                     Debug.Log(enemy.health);
                     if (!enemy.isAlive) {
                         // OnPlayeDeath
-                        MatchManager.TriggerPlayerDeath(gameObject.name, collision.transform.name);
+                        
                     }
                 }
             }
