@@ -5,7 +5,7 @@ public class handleLowerUpperBodySyncing : MonoBehaviour
 {
     [SerializeField] Transform upperBody;
     [SerializeField] Transform lowerBody;
-    private handle_movement handle_movement;
+    private handleMovement handle_movement;
     private float rootLerpAngle = 0f;
     private float lbyDelta;
     private float targetYaw = 0f;
@@ -16,7 +16,7 @@ public class handleLowerUpperBodySyncing : MonoBehaviour
     void Start()
     {
         // get the movement handler script
-        handle_movement = GetComponent<handle_movement>();
+        handle_movement = GetComponent<handleMovement>();
     }
 
     void Update()

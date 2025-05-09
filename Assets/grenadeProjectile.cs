@@ -29,17 +29,9 @@ public class grenadeProjectile : MonoBehaviour
         // detect first hit
 
         if (collision.transform.tag == "Player") {
-            enemy enemy = collision.transform.GetComponent<enemy>();
-            if (enemy != null) {
-                if (enemy.isAlive) {
-                    enemy.Takedamage(100f);
-                    Debug.Log(enemy.health);
-                    if (!enemy.isAlive) {
-                        // OnPlayeDeath
-                        
-                    }
-                }
-            }
+            // damage logic
+
+
             Destroy(gameObject);
             return;
         }

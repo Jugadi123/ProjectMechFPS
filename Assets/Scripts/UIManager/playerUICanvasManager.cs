@@ -6,7 +6,7 @@ public class playerUICanvasManager : MonoBehaviour {
 
     [SerializeField] Camera mainCamera;
 
-    private handle_movement handle_Movement;
+    private handleMovement handle_Movement;
     private handleWeapons handleWeapons;
     private Transform healthBarContainer;
     private RectTransform healthBarContainerRect;
@@ -97,7 +97,7 @@ public class playerUICanvasManager : MonoBehaviour {
 
 
         // mainMenuManager = UIManager.instance;
-        handle_Movement = GetComponentInParent<handle_movement>();
+        handle_Movement = GetComponentInParent<handleMovement>();
         handleWeapons = GetComponentInParent<handleWeapons>();
 
     }
