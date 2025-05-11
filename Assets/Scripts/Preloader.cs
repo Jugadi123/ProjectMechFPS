@@ -3,7 +3,12 @@ using Unity.Netcode;
 using Unity.Netcode.Transports.UTP;
 using System;
 using System.Collections.Generic;
+using TMPro;
 public class Preloader : MonoBehaviour {
+
+    [Header("Debug")]
+    // [SerializeField] private TextMeshProUGUI debugTextElement;
+    // private TextMeshProUGUI debugText;
 
     private UnityTransport transport;
     private string ipAddress;
@@ -30,14 +35,23 @@ public class Preloader : MonoBehaviour {
 
     private void Start()
     {
+        // debugText = debugTextElement.GetComponent<TextMeshProUGUI>();
+        
         // for headless build
-        if (commandLineArgs.Contains("-server")) {
-            Logging.LogColor(ConsoleColor.Green, "Build: Server");
-            NetworkManager.Singleton.StartServer();
-        }
-        else {
-            // Logging.LogColor(ConsoleColor.Green, "Build: Client");
-            // NetworkManager.Singleton.StartClient();
-        }
+        // if (commandLineArgs.Contains("-server")) {
+        //     Logging.LogColor(ConsoleColor.Green, "Build: Server");
+        //     NetworkManager.Singleton.StartServer();
+        // }
+        // else {
+        //     // Logging.LogColor(ConsoleColor.Green, "Build: Client");
+        //     // NetworkManager.Singleton.StartClient();
+        // }
+    }
+
+
+    private void Update()
+    {
+        float fps = Mathf.Floor(1f / Time.deltaTime);
+        // debugText.text = $"FPS: {fps}";
     }
 }

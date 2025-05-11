@@ -6,8 +6,8 @@ public class playerUICanvasManager : MonoBehaviour {
 
     [SerializeField] Camera mainCamera;
 
-    private handleMovement handle_Movement;
-    private handleWeapons handleWeapons;
+    private HandleMovement handleMovement;
+    // private HandleWeapons handleWeapons;
     private Transform healthBarContainer;
     private RectTransform healthBarContainerRect;
     private Transform healthBarBar;
@@ -97,76 +97,76 @@ public class playerUICanvasManager : MonoBehaviour {
 
 
         // mainMenuManager = UIManager.instance;
-        handle_Movement = GetComponentInParent<handleMovement>();
-        handleWeapons = GetComponentInParent<handleWeapons>();
+        // handleMovement = GetComponentInParent<HandleMovement>();
+        // handleWeapons = GetComponentInParent<HandleWeapons>();
 
     }
 
 
-    void DisplayHeatUI() {
-        // heat related vars
-        float maxHeat = handleWeapons.maxHeat;
-        float primaryCurrentHeat = handleWeapons.primaryCurrentHeat;
-        float secondaryCurrentHeat = handleWeapons.secondaryCurrentHeat;
-        bool primaryOverheated = handleWeapons.PrimaryOverheated;
-        bool secondaryOverheated = handleWeapons.SecondaryOverheated;
-        // float primaryHeatCoolDown = handleWeapons.primaryHeatCoolDown;
-        // float secondaryHeatCoolDown = handleWeapons.secondaryHeatCoolDown;
+    // void DisplayHeatUI() {
+    //     // heat related vars
+    //     float maxHeat = handleWeapons.maxHeat;
+    //     float primaryCurrentHeat = handleWeapons.primaryCurrentHeat;
+    //     float secondaryCurrentHeat = handleWeapons.secondaryCurrentHeat;
+    //     bool primaryOverheated = handleWeapons.PrimaryOverheated;
+    //     bool secondaryOverheated = handleWeapons.SecondaryOverheated;
+    //     // float primaryHeatCoolDown = handleWeapons.primaryHeatCoolDown;
+    //     // float secondaryHeatCoolDown = handleWeapons.secondaryHeatCoolDown;
 
 
-        // primary
+    //     // primary
 
 
-        primaryVisualHeat = Mathf.Lerp(primaryVisualHeat, primaryCurrentHeat, Time.deltaTime * 10f);
+    //     primaryVisualHeat = Mathf.Lerp(primaryVisualHeat, primaryCurrentHeat, Time.deltaTime * 10f);
         
-        float primaryHeatPercentage = primaryVisualHeat / maxHeat;
+    //     float primaryHeatPercentage = primaryVisualHeat / maxHeat;
 
-        primaryHeatPercentage = Mathf.Clamp01(primaryHeatPercentage);
+    //     primaryHeatPercentage = Mathf.Clamp01(primaryHeatPercentage);
 
-        primaryHeatBar.GetComponent<RectTransform>().sizeDelta = new Vector2(primaryHeatBar.GetComponent<RectTransform>().sizeDelta.x, primaryHeatPercentage * heatBarRectMaxHeight);
+    //     primaryHeatBar.GetComponent<RectTransform>().sizeDelta = new Vector2(primaryHeatBar.GetComponent<RectTransform>().sizeDelta.x, primaryHeatPercentage * heatBarRectMaxHeight);
 
-        if (primaryOverheated) {
-            float pingPongAlpha = Mathf.PingPong(Time.time * 5f, 1);
-            primaryHeatStatusText.text = "OVER HEATED";
-            primaryHeatStatusText.color = new Color(1, 0.1556604f, 0.1987359f, pingPongAlpha);
-            primaryHeatBar.GetComponent<Image>().color = new Color(primaryHeatBar.GetComponent<Image>().color.r, primaryHeatBar.GetComponent<Image>().color.g, primaryHeatBar.GetComponent<Image>().color.b, pingPongAlpha);
-        }
-        else {
-            primaryHeatStatusText.text = "HEAT: " + Mathf.Floor(primaryCurrentHeat) + "%";
-            primaryHeatStatusText.color = Color.Lerp(primaryHeatStatusText.color, Color.white, Time.deltaTime * 3f);
-            primaryHeatBar.GetComponent<Image>().color = defaultHeatColor;
-        }
+    //     if (primaryOverheated) {
+    //         float pingPongAlpha = Mathf.PingPong(Time.time * 5f, 1);
+    //         primaryHeatStatusText.text = "OVER HEATED";
+    //         primaryHeatStatusText.color = new Color(1, 0.1556604f, 0.1987359f, pingPongAlpha);
+    //         primaryHeatBar.GetComponent<Image>().color = new Color(primaryHeatBar.GetComponent<Image>().color.r, primaryHeatBar.GetComponent<Image>().color.g, primaryHeatBar.GetComponent<Image>().color.b, pingPongAlpha);
+    //     }
+    //     else {
+    //         primaryHeatStatusText.text = "HEAT: " + Mathf.Floor(primaryCurrentHeat) + "%";
+    //         primaryHeatStatusText.color = Color.Lerp(primaryHeatStatusText.color, Color.white, Time.deltaTime * 3f);
+    //         primaryHeatBar.GetComponent<Image>().color = defaultHeatColor;
+    //     }
 
 
-        // secondary
+    //     // secondary
 
-        secondaryVisualHeat = Mathf.Lerp(secondaryVisualHeat, secondaryCurrentHeat, Time.deltaTime * 10f);
+    //     secondaryVisualHeat = Mathf.Lerp(secondaryVisualHeat, secondaryCurrentHeat, Time.deltaTime * 10f);
         
-        float secondaryHeatPercentage = secondaryVisualHeat / maxHeat;
+    //     float secondaryHeatPercentage = secondaryVisualHeat / maxHeat;
 
-        secondaryHeatPercentage = Mathf.Clamp01(secondaryHeatPercentage);
+    //     secondaryHeatPercentage = Mathf.Clamp01(secondaryHeatPercentage);
 
-        secondaryHeatBar.GetComponent<RectTransform>().sizeDelta = new Vector2(secondaryHeatBar.GetComponent<RectTransform>().sizeDelta.x, secondaryHeatPercentage * heatBarRectMaxHeight);
+    //     secondaryHeatBar.GetComponent<RectTransform>().sizeDelta = new Vector2(secondaryHeatBar.GetComponent<RectTransform>().sizeDelta.x, secondaryHeatPercentage * heatBarRectMaxHeight);
 
-        if (secondaryOverheated) {
-            float pingPongAlpha = Mathf.PingPong(Time.time * 5f, 1);
-            secondaryHeatStatusText.text = "OVER HEATED";
-            secondaryHeatStatusText.color = new Color(1, 0.1556604f, 0.1987359f, pingPongAlpha);
-            secondaryHeatBar.GetComponent<Image>().color = new Color(secondaryHeatBar.GetComponent<Image>().color.r, secondaryHeatBar.GetComponent<Image>().color.g, secondaryHeatBar.GetComponent<Image>().color.b, pingPongAlpha);
-        }
-        else {
-            secondaryHeatStatusText.text = "HEAT: " + Mathf.Floor(secondaryCurrentHeat) + "%";
-            secondaryHeatStatusText.color = Color.Lerp(secondaryHeatStatusText.color, Color.white, Time.deltaTime * 3f);
-            secondaryHeatBar.GetComponent<Image>().color = defaultHeatColor;
-        }
+    //     if (secondaryOverheated) {
+    //         float pingPongAlpha = Mathf.PingPong(Time.time * 5f, 1);
+    //         secondaryHeatStatusText.text = "OVER HEATED";
+    //         secondaryHeatStatusText.color = new Color(1, 0.1556604f, 0.1987359f, pingPongAlpha);
+    //         secondaryHeatBar.GetComponent<Image>().color = new Color(secondaryHeatBar.GetComponent<Image>().color.r, secondaryHeatBar.GetComponent<Image>().color.g, secondaryHeatBar.GetComponent<Image>().color.b, pingPongAlpha);
+    //     }
+    //     else {
+    //         secondaryHeatStatusText.text = "HEAT: " + Mathf.Floor(secondaryCurrentHeat) + "%";
+    //         secondaryHeatStatusText.color = Color.Lerp(secondaryHeatStatusText.color, Color.white, Time.deltaTime * 3f);
+    //         secondaryHeatBar.GetComponent<Image>().color = defaultHeatColor;
+    //     }
 
 
-    }
+    // }
 
-    Vector2 AdjustCrosshairSpread(float currentSpread) {
-        Vector2 newCrosshairSize = defaultCrosshairContainerSize + (maxCrosshairContainerSize - defaultCrosshairContainerSize) * (currentSpread / handleWeapons.maxSpread);
-        return newCrosshairSize;
-    }
+    // Vector2 AdjustCrosshairSpread(float currentSpread) {
+    //     Vector2 newCrosshairSize = defaultCrosshairContainerSize + (maxCrosshairContainerSize - defaultCrosshairContainerSize) * (currentSpread / handleWeapons.maxSpread);
+    //     return newCrosshairSize;
+    // }
 
     void Update()
     {
@@ -231,12 +231,9 @@ public class playerUICanvasManager : MonoBehaviour {
 
         // based on current weapon's spread
 
-        crosshairContainerRect.sizeDelta = AdjustCrosshairSpread(handleWeapons.currentWeaponSpread);
+        // crosshairContainerRect.sizeDelta = AdjustCrosshairSpread(handleWeapons.currentWeaponSpread);
 
-
-
-
-        DisplayHeatUI();
+        // DisplayHeatUI();
 
     }
 }

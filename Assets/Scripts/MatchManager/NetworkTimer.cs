@@ -1,18 +1,23 @@
 using UnityEngine;
-using System;
-public class NetworkTimer : MonoBehaviour {
+using Unity.Netcode;
+public class NetworkTimer : NetworkBehaviour {
 
-    public static NetworkTimer Singleton;
+    public static NetworkTimer Singleton { get; private set; }
+
+    // Current tick (synced if clients need to know)
+    public NetworkVariable<ulong> CurrentTick = new NetworkVariable<ulong>(0, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
 
     public const float SERVER_TICK_RATE = 60f;
     private float timer = 0f;
-    public float tickInterval => 1f / SERVER_TICK_RATE;
-    public ulong currentTick { get; private set; } = 0;
-
-    public Action<ulong> onTickUpdate;
+    public const float TickInterval = 1f / SERVER_TICK_RATE;
 
     void Awake()
     {
+        Application.targetFrameRate = 70;
+    }
+
+    public override void OnNetworkSpawn() {
+
         if (Singleton != null && Singleton != this)
         {
             Destroy(gameObject);
@@ -21,21 +26,25 @@ public class NetworkTimer : MonoBehaviour {
 
         Singleton = this;
         DontDestroyOnLoad(this);
+
     }
 
     void Update()
     {
+        if (!IsServer) {
+            return;
+        }
+
         timer += Time.deltaTime;
 
-        while (timer >= tickInterval) {
-            timer -= Time.deltaTime;
-            currentTick++;
-            onTickUpdate?.Invoke(currentTick);
+        while (timer >= TickInterval) {
+            timer -= TickInterval;
+            CurrentTick.Value++;
         }
     }
 
     public float GetTickInterval() {
-        return tickInterval;
+        return TickInterval;
     }
 
     public float GetTimeSinceLastTick() {
@@ -43,6 +52,6 @@ public class NetworkTimer : MonoBehaviour {
     }
 
     public float GetTimeUntilNextTick() {
-        return tickInterval - timer;
+        return TickInterval - timer;
     }
 }

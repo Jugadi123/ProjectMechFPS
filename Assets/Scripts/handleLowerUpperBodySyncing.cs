@@ -5,7 +5,7 @@ public class handleLowerUpperBodySyncing : MonoBehaviour
 {
     [SerializeField] Transform upperBody;
     [SerializeField] Transform lowerBody;
-    private handleMovement handle_movement;
+    private HandleMovement handleMovement;
     private float rootLerpAngle = 0f;
     private float lbyDelta;
     private float targetYaw = 0f;
@@ -16,7 +16,7 @@ public class handleLowerUpperBodySyncing : MonoBehaviour
     void Start()
     {
         // get the movement handler script
-        handle_movement = GetComponent<handleMovement>();
+        handleMovement = GetComponent<HandleMovement>();
     }
 
     void Update()
@@ -27,13 +27,13 @@ public class handleLowerUpperBodySyncing : MonoBehaviour
     void UpdateLBY()
     {
         float dt = Time.deltaTime;
-        if (handle_movement.IsMovingHorizontally) {
+        if (handleMovement.IsMovingHorizontally) {
             // If we move, sync the root with the upper body based on the direction of movement
             rootLerpAngle = Mathf.LerpAngle(transform.rotation.eulerAngles.y, upperBody.rotation.eulerAngles.y, dt * syncingSpeed);
             transform.rotation = Quaternion.Euler(0f, rootLerpAngle, 0f);
 
             // Convert movement direction to world yaw to rotate lower body
-            Vector3 moveDir = handle_movement.horizontalMoveDirection;
+            Vector3 moveDir = handleMovement.horizontalMoveDirection;
             float moveYaw = Mathf.Atan2(-moveDir.x, -moveDir.z) * Mathf.Rad2Deg;
             
             lowerBodyYawOffset = Mathf.LerpAngle(lowerBody.rotation.eulerAngles.y, moveYaw, dt * syncingSpeed);

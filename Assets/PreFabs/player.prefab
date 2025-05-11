@@ -6503,7 +6503,6 @@ GameObject:
   m_Component:
   - component: {fileID: 122560402647312339}
   - component: {fileID: 1525372228605417306}
-  - component: {fileID: 6236493720831455234}
   - component: {fileID: 7409806950030596334}
   m_Layer: 0
   m_Name: Player Camera
@@ -6578,14 +6577,6 @@ Camera:
   m_OcclusionCulling: 1
   m_StereoConvergence: 10
   m_StereoSeparation: 0.022
---- !u!81 &6236493720831455234
-AudioListener:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4965179628022923037}
-  m_Enabled: 1
 --- !u!114 &7409806950030596334
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -31962,13 +31953,16 @@ GameObject:
   - component: {fileID: 1412943521695208284}
   - component: {fileID: 9032555669634233160}
   - component: {fileID: -2348650890616440137}
-  - component: {fileID: 1124262441080068924}
   - component: {fileID: 3165469521244010512}
-  - component: {fileID: 3767516798755301923}
-  - component: {fileID: 1384729097984183024}
   - component: {fileID: 2476633671501915002}
+  - component: {fileID: 6222533525874470676}
+  - component: {fileID: 1520554341915075215}
+  - component: {fileID: 6709507238724757484}
+  - component: {fileID: -5522516751880878524}
   - component: {fileID: 2291646223527682074}
-  - component: {fileID: 7582060971050446501}
+  - component: {fileID: 8501792686085128543}
+  - component: {fileID: 3441511734479824711}
+  - component: {fileID: 4739643142289432194}
   m_Layer: 6
   m_Name: player
   m_TagString: Player
@@ -32044,52 +32038,6 @@ MonoBehaviour:
   AutoObjectParentSync: 1
   SyncOwnerTransformWhenParented: 1
   AllowOwnerToParent: 0
---- !u!114 &1124262441080068924
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8882107188300453232}
-  m_Enabled: 0
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e96cb6065543e43c4a752faaa1468eb1, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  ShowTopMostFoldoutHeaderGroup: 1
-  NetworkTransformExpanded: 0
-  AutoOwnerAuthorityTickOffset: 1
-  PositionInterpolationType: 0
-  RotationInterpolationType: 0
-  ScaleInterpolationType: 0
-  PositionLerpSmoothing: 1
-  PositionMaxInterpolationTime: 0.1
-  RotationLerpSmoothing: 1
-  RotationMaxInterpolationTime: 0.1
-  ScaleLerpSmoothing: 1
-  ScaleMaxInterpolationTime: 0.1
-  AuthorityMode: 1
-  TickSyncChildren: 0
-  UseUnreliableDeltas: 0
-  SyncPositionX: 1
-  SyncPositionY: 1
-  SyncPositionZ: 1
-  SyncRotAngleX: 1
-  SyncRotAngleY: 1
-  SyncRotAngleZ: 1
-  SyncScaleX: 0
-  SyncScaleY: 0
-  SyncScaleZ: 0
-  PositionThreshold: 0.001
-  RotAngleThreshold: 0.01
-  ScaleThreshold: 0.01
-  UseQuaternionSynchronization: 0
-  UseQuaternionCompression: 0
-  UseHalfFloatPrecision: 0
-  InLocalSpace: 0
-  SwitchTransformSpaceWhenParented: 0
-  Interpolate: 1
-  SlerpPosition: 0
 --- !u!114 &3165469521244010512
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -32107,99 +32055,7 @@ MonoBehaviour:
   mouseSensitivity: 2
   xRotation: 0
   yRotation: 0
---- !u!114 &3767516798755301923
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8882107188300453232}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 190f33450cd69df41a87898d0a3312d0, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  ShowTopMostFoldoutHeaderGroup: 1
-  camera_Shakes: {fileID: 0}
-  characterController: {fileID: 0}
-  currentMoveState: 0
-  currentPlayerSpeed: 0
-  playerWalkSpeed: 2
-  playerDashSpeed: 30
-  playerSprintSpeed: 10
-  playerAcceleration: 0
-  playerDeceleration: 0
-  gravity: -9.81
-  input: {x: 0, y: 0, z: 0}
-  horizontalMoveDirection: {x: 0, y: 0, z: 0}
-  currentPlayerVelocity: {x: 0, y: 0, z: 0}
-  IsOnGround: 0
-  sprintButton: 0
-  sprintButtonDT: 0
-  IsMovingHorizontally: 0
-  fuelMax: 0
-  fuelRegen: 0
-  sprintingFuelUsage: 0
-  thrusterFuelUsage: 25
-  currentFuelAmount: 0
-  IsThrusting: 0
-  thrusterGravity: 30
-  wallRunGravity: 0
-  IsDashing: 0
-  IsWalking: 0
-  runDashCooldown: 0
-  dashCoolDown: 0
-  dashTime: 0
-  canUseFuel: 0
-  fuelRegenStartTimer: 0
-  storeDashDirection: 1
-  DashDirection: {x: 0, y: 0, z: 0}
-  dashKey: 0
-  isHangingOnWall: 0
-  stickingForce: 30
-  canWallRun: 0
-  pressedOnce: 1
-  doubleTapWindow: 0.3
-  thrustersCooldown: 1
-  CanUseThrusters: 1
---- !u!114 &1384729097984183024
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8882107188300453232}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d9f7ffbd486cd4f73a3908eca8e629a9, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  primaryMuzzleFlash: {fileID: 5569972734785299127}
-  secondaryMuzzleFlash: {fileID: 5307171900132303129}
-  primaryWeaponSound: {fileID: 4152716056674293783}
-  secondaryWeaponSound: {fileID: 2919063975431633932}
-  bulletHole: {fileID: 3437513179833019632, guid: 6c436386756a845e48d1758fe6bd4202, type: 3}
-  bulletImpact: {fileID: 7188631696446513353, guid: 84245aa9d2dd64acbba25091afa6b051, type: 3}
-  Tracer: {fileID: 6431433845162647267, guid: 949e479f2f06e4657b1c284cddbca1bc, type: 3}
-  upperBody: {fileID: 1583617535082976205}
-  primaryWeapon: {fileID: 2819227002285436278}
-  secondaryWeapon: {fileID: 4851872726184842597}
-  mainCamera: {fileID: 1525372228605417306}
-  cockpitCamera: {fileID: 4357351780347744648}
-  primaryFireRate: 15
-  secondaryFireRate: 0
-  maxHeat: 0
-  primaryCurrentHeat: 0
-  secondaryCurrentHeat: 0
-  PrimaryOverheated: 0
-  SecondaryOverheated: 0
-  primaryHeatCoolDown: 0
-  secondaryHeatCoolDown: 0
-  shotID: 0
-  missilePrefab: {fileID: 7126355240600540162, guid: 9ab6349b1ea1544bab9bf405ddfe5ef6, type: 3}
-  grenadePrefab: {fileID: 2340326273188182108, guid: dbb020158d75f494ab148876d9685932, type: 3}
-  currentWeaponSpread: 0.7
-  maxSpread: 2
+  rotationReconcileThreshold: 2
 --- !u!114 &2476633671501915002
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -32216,14 +32072,107 @@ MonoBehaviour:
   playerCamera: {fileID: 1525372228605417306}
   playerCockpitCamera: {fileID: 4357351780347744648}
   playerCockpitMesh: {fileID: 6713752115126006962}
-  playerCameraAudioListener: {fileID: 0}
-  primaryWeapon: {fileID: 0}
-  secondaryWeapon: {fileID: 0}
   allowRotate: 1
   defaultPos: {x: 0, y: 0, z: 0}
   defaultRotation: {x: 0, y: 0, z: 0}
   bobAmount: 0
   bobSpeed: 0
+--- !u!114 &6222533525874470676
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8882107188300453232}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 190f33450cd69df41a87898d0a3312d0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ShowTopMostFoldoutHeaderGroup: 1
+  characterController: {fileID: 0}
+  doubleTapHandler: {fileID: 0}
+  currentPlayerVelocity: {x: 0, y: 0, z: 0}
+  horizontalMoveDirection: {x: 0, y: 0, z: 0}
+  IsMovingHorizontally: 0
+  playerNetvars: {fileID: 0}
+  serverPositionTolerance: 0.5
+  reconciliationLerpSpeed: 10
+  IsDashing: 0
+  IsThrusting: 0
+  IsOnGround: 0
+--- !u!114 &1520554341915075215
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8882107188300453232}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6b595e76e78ed4829b5bcf909af79dc5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ShowTopMostFoldoutHeaderGroup: 1
+  dashSound: {fileID: 2291646223527682074}
+--- !u!114 &6709507238724757484
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8882107188300453232}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 48568fa482c6a452fbfb584ed862a7c9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ShowTopMostFoldoutHeaderGroup: 1
+--- !u!114 &-5522516751880878524
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8882107188300453232}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e7da923609b35400b91a0f61c256ef14, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ShowTopMostFoldoutHeaderGroup: 1
+  isAlive:
+    m_InternalValue: 1
+  health:
+    m_InternalValue: 100
+  playerWalkSpeed:
+    m_InternalValue: 5
+  playerSprintSpeed:
+    m_InternalValue: 10
+  playerDashSpeed:
+    m_InternalValue: 30
+  playerAcceleration:
+    m_InternalValue: 7
+  playerDeceleration:
+    m_InternalValue: 5
+  gravity:
+    m_InternalValue: -9.81
+  fuelMax:
+    m_InternalValue: 100
+  fuelRegenRate:
+    m_InternalValue: 20
+  fuelRegenDelay:
+    m_InternalValue: 2
+  thrusterFuelUsage:
+    m_InternalValue: 43
+  sprintingFuelUsage:
+    m_InternalValue: 10
+  dashCoolDown:
+    m_InternalValue: 0.5
+  dashTime:
+    m_InternalValue: 0.2
+  thrusterForce:
+    m_InternalValue: 20
 --- !u!82 &2291646223527682074
 AudioSource:
   m_ObjectHideFlags: 0
@@ -32237,7 +32186,7 @@ AudioSource:
   m_audioClip: {fileID: 8300000, guid: 43f17a1609da37d4eba3df015a26ad88, type: 3}
   m_Resource: {fileID: 8300000, guid: 43f17a1609da37d4eba3df015a26ad88, type: 3}
   m_PlayOnAwake: 0
-  m_Volume: 1
+  m_Volume: 0.5
   m_Pitch: 1
   Loop: 0
   Mute: 0
@@ -32321,7 +32270,201 @@ AudioSource:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
---- !u!114 &7582060971050446501
+--- !u!82 &8501792686085128543
+AudioSource:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8882107188300453232}
+  m_Enabled: 1
+  serializedVersion: 4
+  OutputAudioMixerGroup: {fileID: 0}
+  m_audioClip: {fileID: 8300000, guid: eaa11d39987d34d4e8409f28d9fc2db9, type: 3}
+  m_Resource: {fileID: 8300000, guid: eaa11d39987d34d4e8409f28d9fc2db9, type: 3}
+  m_PlayOnAwake: 1
+  m_Volume: 0.5
+  m_Pitch: 1
+  Loop: 0
+  Mute: 0
+  Spatialize: 0
+  SpatializePostEffects: 0
+  Priority: 128
+  DopplerLevel: 1
+  MinDistance: 1
+  MaxDistance: 500
+  Pan2D: 0
+  rolloffMode: 0
+  BypassEffects: 0
+  BypassListenerEffects: 0
+  BypassReverbZones: 0
+  rolloffCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    - serializedVersion: 3
+      time: 1
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  panLevelCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  spreadCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  reverbZoneMixCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+--- !u!82 &3441511734479824711
+AudioSource:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8882107188300453232}
+  m_Enabled: 1
+  serializedVersion: 4
+  OutputAudioMixerGroup: {fileID: 0}
+  m_audioClip: {fileID: 8300000, guid: f98bd7111ba98447890790b0bb83b87d, type: 3}
+  m_Resource: {fileID: 8300000, guid: f98bd7111ba98447890790b0bb83b87d, type: 3}
+  m_PlayOnAwake: 1
+  m_Volume: 0.5
+  m_Pitch: 1
+  Loop: 0
+  Mute: 0
+  Spatialize: 0
+  SpatializePostEffects: 0
+  Priority: 128
+  DopplerLevel: 1
+  MinDistance: 1
+  MaxDistance: 500
+  Pan2D: 0
+  rolloffMode: 0
+  BypassEffects: 0
+  BypassListenerEffects: 0
+  BypassReverbZones: 0
+  rolloffCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    - serializedVersion: 3
+      time: 1
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  panLevelCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  spreadCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  reverbZoneMixCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+--- !u!114 &4739643142289432194
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -32330,10 +32473,35 @@ MonoBehaviour:
   m_GameObject: {fileID: 8882107188300453232}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 6b595e76e78ed4829b5bcf909af79dc5, type: 3}
+  m_Script: {fileID: 11500000, guid: d9f7ffbd486cd4f73a3908eca8e629a9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  dashSound: {fileID: 2291646223527682074}
+  primaryMuzzleFlash: {fileID: 5569972734785299127}
+  secondaryMuzzleFlash: {fileID: 5307171900132303129}
+  primaryWeaponSound: {fileID: 8501792686085128543}
+  secondaryWeaponSound: {fileID: 3441511734479824711}
+  bulletHole: {fileID: 3437513179833019632, guid: 6c436386756a845e48d1758fe6bd4202, type: 3}
+  bulletImpact: {fileID: 7188631696446513353, guid: 84245aa9d2dd64acbba25091afa6b051, type: 3}
+  Tracer: {fileID: 6431433845162647267, guid: 949e479f2f06e4657b1c284cddbca1bc, type: 3}
+  upperBody: {fileID: 1583617535082976205}
+  primaryWeapon: {fileID: 2819227002285436278}
+  secondaryWeapon: {fileID: 4851872726184842597}
+  mainCamera: {fileID: 1525372228605417306}
+  cockpitCamera: {fileID: 4357351780347744648}
+  primaryFireRate: 0
+  secondaryFireRate: 0
+  maxHeat: 100
+  primaryCurrentHeat: 0
+  secondaryCurrentHeat: 0
+  PrimaryOverheated: 0
+  SecondaryOverheated: 0
+  primaryHeatCoolDown: 0
+  secondaryHeatCoolDown: 0
+  shotID: 0
+  missilePrefab: {fileID: 7126355240600540162, guid: 9ab6349b1ea1544bab9bf405ddfe5ef6, type: 3}
+  grenadePrefab: {fileID: 2340326273188182108, guid: dbb020158d75f494ab148876d9685932, type: 3}
+  currentWeaponSpread: 0
+  maxSpread: 2
 --- !u!1 &8985906505551546294
 GameObject:
   m_ObjectHideFlags: 0

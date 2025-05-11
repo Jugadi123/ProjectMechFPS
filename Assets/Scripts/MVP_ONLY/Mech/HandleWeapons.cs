@@ -1,6 +1,6 @@
 using System.Collections;
 using UnityEngine;
-public class handleWeapons : MonoBehaviour
+public class HandleWeapons : MonoBehaviour
 {
 
     [SerializeField] GameObject primaryMuzzleFlash;
