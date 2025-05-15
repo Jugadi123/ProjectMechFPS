@@ -1,0 +1,39 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ba9e96a11b03b475cb469aeec6e8c036, type: 3}
+  m_Name: AssaultRifle
+  m_EditorClassIdentifier: 
+  weaponType: 1
+  weaponName: AR-600
+  IsPrimary: 1
+  weaponModel: {fileID: 0}
+  muzzleFlashPrefab: {fileID: 32169606653991175, guid: b4e06ec543d1c4cf1b4399d7c2ea3878, type: 3}
+  fireSound: {fileID: 8300000, guid: eaa11d39987d34d4e8409f28d9fc2db9, type: 3}
+  fireRateTicks: 10
+  damage: 15
+  range: 800
+  heatPerShot: 20
+  maxHeat: 100
+  cooldownRate: 3
+  overheatedCooldownTime: 5
+  baseSpread: 0.1
+  maxSpread: 1.5
+  spreadIncreasePerShot: 0.05
+  spreadRecoveryRate: 0.3
+  impactEffectPrefab: {fileID: 7188631696446513353, guid: 84245aa9d2dd64acbba25091afa6b051, type: 3}
+  bulletHolePrefab: {fileID: 3437513179833019632, guid: 6c436386756a845e48d1758fe6bd4202, type: 3}
+  tracerPrefab: {fileID: 6431433845162647267, guid: 949e479f2f06e4657b1c284cddbca1bc, type: 3}
+  isHitscan: 1
+  projectilePrefab: {fileID: 0}
+  projectileSpeed: 0
+  projectileGravity: 0
+  explosionRadius: 0

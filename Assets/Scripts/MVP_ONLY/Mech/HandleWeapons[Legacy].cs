@@ -24,11 +24,7 @@ public class HandleWeapons : MonoBehaviour
     private float secondaryFireCoolDown = 0f;
     public RaycastHit hitInfo;
     public RaycastHit hitInfoLOS;
-
-
-    private RaycastHit hitInfoGrenade;
-
-
+    
 
     private Vector3 rayOrigin;
     private Vector3 rayDirection;

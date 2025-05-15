@@ -50,7 +50,7 @@ public class PlayerNetvars : NetworkBehaviour
 
 
     // weapon netvars
-
-
+    // [SerializeField] private WeaponNetvars weaponNetvars;
+    // public WeaponNetvars WeaponNetvars => weaponNetvars;
 }
         

@@ -3,7 +3,7 @@
 
 using UnityEngine;
 
-[CreateAssetMenu(fileName = "Weapon_Weapon", menuName = "Weapons/Weapon")]
+[CreateAssetMenu(fileName = "Weapon_Weapon", menuName = "Weapons/Weaponfewfwefwe")]
 public class ScriptableWeapon : ScriptableObject {
     public int id;
     public Sprite Icon2D;

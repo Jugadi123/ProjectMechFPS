@@ -5,6 +5,9 @@ using Unity.Multiplayer.Tools.NetworkSimulator.Runtime;
 
 public class HandleMovement : NetworkBehaviour {
 
+
+    [SerializeField] private int fps;
+
     [SerializeField] private CharacterController characterController;
 
     // IMPORT doubletap.cs
@@ -55,7 +58,6 @@ public class HandleMovement : NetworkBehaviour {
 
     public bool IsThrusting = false;
     public bool IsOnGround = false;
-    
 
     private void Awake()
     {
@@ -195,38 +197,6 @@ public class HandleMovement : NetworkBehaviour {
         characterController.Move(currentVelocity * tickInterval);
     }
 
-    private void HandleLocalInput()
-    {
-
-        ulong currentTick = NetworkTimer.Singleton.CurrentTick.Value;
-
-        Vector3 input = new Vector3(
-            Input.GetAxisRaw("Horizontal"), 
-            Input.GetAxisRaw("Vertical"), 
-            Input.GetAxisRaw("Jump")
-        );
-
-        // Store input in buffer for reconciliation
-        InputCommand inputCommand = new InputCommand
-        {
-            tick = currentTick,
-            input = input,
-            sprintKey = Input.GetKey(KeyCode.LeftShift),
-            dashKey = Input.GetKey(KeyCode.C)
-        };
-
-        inputBuffer[currentTick % InputBufferSize] = inputCommand;
-
-        // Client-side prediction
-        HandleVerticalMovement(inputCommand.input.z);
-        HandleHorizontalMovement(inputCommand.input, inputCommand.sprintKey, inputCommand.dashKey);
-        MovePlayer(currentPlayerVelocity);
-
-        // Network communication
-        SendInputToServerRpc(currentTick, inputCommand.input, inputCommand.sprintKey, inputCommand.dashKey, transform.position);
-
-    }
-
 
     [ServerRpc]
     private void SendInputToServerRpc(ulong tick, Vector3 input, bool sprintKey, bool dashKey, Vector3 clientReportedPosition)
@@ -268,6 +238,7 @@ public class HandleMovement : NetworkBehaviour {
                 InputCommand inputCommand = inputBuffer[t % InputBufferSize];
                 if (inputCommand.tick == t) // Make sure it's valid
                 {
+                    HandleHorizontalMovement(inputCommand.input, inputCommand.sprintKey, inputCommand.dashKey);
                     HandleVerticalMovement(inputCommand.input.z);
                 }
             }
@@ -278,11 +249,12 @@ public class HandleMovement : NetworkBehaviour {
     private void BroadcastPositionClientRpc(Vector3 position)
     {
         if (IsOwner) return;
-
+        // this for other players
         fromPosition = transform.position;
         toPosition = position;
         interpTimer = 0f;
         interpDuration = NetworkTimer.Singleton.GetTickInterval() * 2f;
+        
     }
 
 
@@ -301,12 +273,29 @@ public class HandleMovement : NetworkBehaviour {
     }
 
 
+    private Vector3 inputDirection;
+    private bool sprintKey;
+    private bool dashKey;
+
     void Update()
     {
+        if (IsServer) {
+            Application.targetFrameRate = 60;
+        }
+        else if (IsOwner) {
+            Application.targetFrameRate = fps;
+        }
+
         if (IsOwner)
         {
-            // Handle input for local player
-            HandleLocalInput();
+            // Gather input
+            inputDirection = new Vector3(
+                Input.GetAxisRaw("Horizontal"), 
+                Input.GetAxisRaw("Vertical"), 
+                Input.GetAxisRaw("Jump")
+            );
+            sprintKey = Input.GetKey(KeyCode.LeftShift);
+            dashKey = Input.GetKey(KeyCode.C);
 
             // Simulate network conditions for debugging
             SimulateNetworkConditionsForDebug();
@@ -315,6 +304,32 @@ public class HandleMovement : NetworkBehaviour {
         {
             // Handle input for remote players
             InterpolateOtherPlayers();
+        }
+    }
+
+    void FixedUpdate()
+    {
+        if (IsOwner)
+        {
+            // Client-side prediction and movement processing
+            HandleVerticalMovement(inputDirection.z);
+            HandleHorizontalMovement(inputDirection, sprintKey, dashKey);
+
+            // Move the player
+            MovePlayer(currentPlayerVelocity);
+
+            // input buffering and sending rpc
+            ulong currentTick = NetworkTimer.Singleton.CurrentTick.Value;
+
+            inputBuffer[currentTick % InputBufferSize] = new InputCommand
+            {
+                tick = currentTick,
+                input = inputDirection,
+                sprintKey = sprintKey,
+                dashKey = dashKey
+            };
+
+            SendInputToServerRpc(currentTick, inputDirection, sprintKey, dashKey, transform.position);
         }
     }
 

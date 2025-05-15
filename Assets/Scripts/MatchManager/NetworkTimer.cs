@@ -13,11 +13,10 @@ public class NetworkTimer : NetworkBehaviour {
 
     void Awake()
     {
-        Application.targetFrameRate = 70;
+        Application.targetFrameRate = 60;
     }
 
     public override void OnNetworkSpawn() {
-
         if (Singleton != null && Singleton != this)
         {
             Destroy(gameObject);
@@ -26,11 +25,11 @@ public class NetworkTimer : NetworkBehaviour {
 
         Singleton = this;
         DontDestroyOnLoad(this);
-
     }
 
     void Update()
     {
+
         if (!IsServer) {
             return;
         }
@@ -41,6 +40,10 @@ public class NetworkTimer : NetworkBehaviour {
             timer -= TickInterval;
             CurrentTick.Value++;
         }
+    }
+
+    public int GetServerTickRate() {
+        return (int)SERVER_TICK_RATE;
     }
 
     public float GetTickInterval() {

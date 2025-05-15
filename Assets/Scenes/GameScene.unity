@@ -2737,7 +2737,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_PresetAsset: {fileID: 0}
   m_PresetReference:
-    rid: 5668215793937285264
+    rid: 5668215857023287383
   m_Scenario:
     rid: -2
   m_IsScenarioSettingsFolded: 0
@@ -2747,7 +2747,7 @@ MonoBehaviour:
     RefIds:
     - rid: -2
       type: {class: , ns: , asm: }
-    - rid: 5668215793937285264
+    - rid: 5668215857023287383
       type: {class: NetworkSimulatorPreset, ns: Unity.Multiplayer.Tools.NetworkSimulator.Runtime, asm: Unity.Multiplayer.Tools.NetworkSimulator.Runtime}
       data:
         <Name>k__BackingField: None
@@ -11536,11 +11536,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4821396842422985690, guid: b5ac8aac8c7a04de1a16435a19497717, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 3.5390003
+      value: 4.06
       objectReference: {fileID: 0}
     - target: {fileID: 4821396842422985690, guid: b5ac8aac8c7a04de1a16435a19497717, type: 3}
       propertyPath: m_LocalPosition.z
-      value: -27.056
+      value: -26.7
       objectReference: {fileID: 0}
     - target: {fileID: 4821396842422985690, guid: b5ac8aac8c7a04de1a16435a19497717, type: 3}
       propertyPath: m_LocalRotation.w
@@ -17031,15 +17031,15 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 4821396842422985690, guid: b5ac8aac8c7a04de1a16435a19497717, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -14.1
+      value: -11.91
       objectReference: {fileID: 0}
     - target: {fileID: 4821396842422985690, guid: b5ac8aac8c7a04de1a16435a19497717, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 3.2380002
+      value: 6.34
       objectReference: {fileID: 0}
     - target: {fileID: 4821396842422985690, guid: b5ac8aac8c7a04de1a16435a19497717, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 13.76
+      value: 12.26
       objectReference: {fileID: 0}
     - target: {fileID: 4821396842422985690, guid: b5ac8aac8c7a04de1a16435a19497717, type: 3}
       propertyPath: m_LocalRotation.w
@@ -26760,11 +26760,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4821396842422985690, guid: b5ac8aac8c7a04de1a16435a19497717, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 2.9
+      value: 3.92
       objectReference: {fileID: 0}
     - target: {fileID: 4821396842422985690, guid: b5ac8aac8c7a04de1a16435a19497717, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 31.171
+      value: 30.503
       objectReference: {fileID: 0}
     - target: {fileID: 4821396842422985690, guid: b5ac8aac8c7a04de1a16435a19497717, type: 3}
       propertyPath: m_LocalRotation.w
@@ -58066,7 +58066,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &1351752279
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -69138,7 +69138,7 @@ MonoBehaviour:
   NetworkConfig:
     ProtocolVersion: 0
     NetworkTransport: {fileID: 1776226602}
-    PlayerPrefab: {fileID: 0}
+    PlayerPrefab: {fileID: 8882107188300453232, guid: 1326737de00d24f3fbf08de797ac7cbb, type: 3}
     Prefabs:
       NetworkPrefabsLists:
       - {fileID: 11400000, guid: f8785c563d7fc4e0a8c2bf2815312503, type: 2}
@@ -71972,7 +71972,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8595380468803996879, guid: 45d01203696434f499d9e5df8e0215a4, type: 3}
       propertyPath: m_IsActive
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -73572,11 +73572,11 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 4821396842422985690, guid: b5ac8aac8c7a04de1a16435a19497717, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 12.85
+      value: 10.61
       objectReference: {fileID: 0}
     - target: {fileID: 4821396842422985690, guid: b5ac8aac8c7a04de1a16435a19497717, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 1.797
+      value: 5.24
       objectReference: {fileID: 0}
     - target: {fileID: 4821396842422985690, guid: b5ac8aac8c7a04de1a16435a19497717, type: 3}
       propertyPath: m_LocalPosition.z

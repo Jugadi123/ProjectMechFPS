@@ -93,6 +93,8 @@ public class MatchServer : NetworkBehaviour
 
         Vector3 spawnLocation = bestSpawn.position;
 
+        Debug.Log($"Spawning player {clientId} at {spawnLocation}");
+
         GameObject player = Instantiate(playerPrefab, spawnLocation, Quaternion.identity);
 
         player.GetComponent<NetworkObject>().SpawnAsPlayerObject(clientId);
@@ -104,13 +106,13 @@ public class MatchServer : NetworkBehaviour
     
     private Transform GetBestSpawnForPlayer(IReadOnlyList<NetworkClient> playerList) {
 
-        // if there's atleast one spawn point available
-        if (!(spawnPoints.Count > 0)) {
-            return null;
-        }
+        // // if there's atleast one spawn point available
+        // if (!(spawnPoints.Count > 0)) {
+        //     return null;
+        // }
 
-        Transform bestSpawnFound = spawnPoints[(int)Random.Range(0, spawnPoints.Count)];
+        // Transform bestSpawnFound = spawnPoints[(int)Random.Range(0, spawnPoints.Count)];
     
-        return bestSpawnFound;
+        return spawnPoints[0];
     }
 }
