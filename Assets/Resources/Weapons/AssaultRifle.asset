@@ -21,7 +21,7 @@ MonoBehaviour:
   fireRateTicks: 10
   damage: 15
   range: 800
-  heatPerShot: 20
+  heatPerShot: 3.5
   maxHeat: 100
   cooldownRate: 3
   overheatedCooldownTime: 5

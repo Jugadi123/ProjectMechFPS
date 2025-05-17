@@ -47,10 +47,5 @@ public class PlayerNetvars : NetworkBehaviour
     // Thruster Force
     public NetworkVariable<float> thrusterForce = new NetworkVariable<float>(20f, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
 
-
-
-    // weapon netvars
-    // [SerializeField] private WeaponNetvars weaponNetvars;
-    // public WeaponNetvars WeaponNetvars => weaponNetvars;
 }
         

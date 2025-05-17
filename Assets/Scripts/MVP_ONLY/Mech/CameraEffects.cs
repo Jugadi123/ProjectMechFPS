@@ -29,11 +29,6 @@ public class CameraEffects : NetworkBehaviour
         movementInput = GetComponent<HandleMovement>();
         InitializeDefaults();
         SetupWeapons();
-
-        if (IsOwner)
-            EnableLocalPlayerView();
-        else
-            DisableRemoteView();
     }
 
     private void InitializeDefaults()
@@ -48,23 +43,6 @@ public class CameraEffects : NetworkBehaviour
     {
         primaryWeapon = transform.GetChild(0).GetChild(1).GetChild(0);
         secondaryWeapon = transform.GetChild(0).GetChild(1).GetChild(1);
-    }
-
-    private void EnableLocalPlayerView()
-    {
-        playerCockpitMesh.SetActive(true);
-        playerCamera.enabled = true;
-        playerCockpitCamera.enabled = true;
-
-        playerCamera.cullingMask = ~LayerMask.GetMask("UI", "CockpitView", "SpawnPoint Mask");
-        playerCockpitCamera.cullingMask = LayerMask.GetMask("UI", "CockpitView");
-    }
-
-    private void DisableRemoteView()
-    {
-        playerCockpitMesh.SetActive(false);
-        playerCamera.enabled = false;
-        playerCockpitCamera.enabled = false;
     }
 
 
