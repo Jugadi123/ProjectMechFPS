@@ -5,4 +5,11 @@ public enum WeaponType
     RocketLauncher,
     GrenadeLauncher,
     Sniper
-} 
+}
+
+public enum ProjectileType
+{
+    None,
+    Grenade,
+    Rocket
+}

@@ -33,7 +33,11 @@ MonoBehaviour:
   bulletHolePrefab: {fileID: 3437513179833019632, guid: 6c436386756a845e48d1758fe6bd4202, type: 3}
   tracerPrefab: {fileID: 6431433845162647267, guid: 949e479f2f06e4657b1c284cddbca1bc, type: 3}
   isHitscan: 1
+  projectileType: 0
   projectilePrefab: {fileID: 0}
+  projectileMass: 0.7
   projectileSpeed: 0
   projectileGravity: 0
   explosionRadius: 0
+  firstBounchExplosionExpiryTime: 0
+  timeBeforeCanManuallyExplode: 0

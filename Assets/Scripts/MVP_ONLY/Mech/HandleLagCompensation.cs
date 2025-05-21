@@ -76,7 +76,7 @@ public class HandleLagCompensation : NetworkBehaviour
         // Perform hit detection with rewound positions
         // if we ignore the localplayer then we can't detect any player hits (because they're all local on the server)
         // layers and tags are local not networked.
-        int hitMask = ~LayerMask.GetMask("Projectiles&Bullets");
+        int hitMask = ~LayerMask.GetMask("Projectiles_Client", "Projectiles_Server");
         bool didHit = Physics.Raycast(rayOrigin, rayDirection, out hitResult, rayRange, hitMask);
 
         // Restore all rewound players to original positions

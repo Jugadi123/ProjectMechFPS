@@ -14,16 +14,10 @@ public class DeathManager : NetworkBehaviour
     private CameraEffects cameraEffects;
     private HandleLagCompensation handleLagCompensation;
     private HandleHealth handleHealth;
+    public ulong attackerId;
 
     [SerializeField] private Camera playerCamera;
     [SerializeField] private Camera cockpitCamera;
-
-    private Vector3 oldCameraWorldPosition;
-    private Vector3 newCameraWorldPosition;
-    private Vector3 oldCameraRotation;
-
-    // private Transform savedPlayerCameraTransform;
-
 
     public override void OnNetworkSpawn()
     {
@@ -39,13 +33,19 @@ public class DeathManager : NetworkBehaviour
         playerNetvars.health.OnValueChanged += OnHealthChanged; // listen for health changes
     }
 
+    public void SetAttackerId(ulong receivedAttackerId)
+    {
+        attackerId = receivedAttackerId;
+        Debug.Log($"Attacker Id: {attackerId}");
+    }
+
 
     private void OnHealthChanged(float oldHealth, float newHealth) // run death only once we die
     {
         if (oldHealth > 0f && newHealth <= 0f) // only run death ONCE we die.
         {
             OnDeath();
-            StartCoroutine(RunDeathCam(5f));
+            // StartCoroutine(RunDeathCam(5f));
         }
     }
 
@@ -68,13 +68,20 @@ public class DeathManager : NetworkBehaviour
         handleHealth.enabled = false;
         // disable cockpit camera
         cockpitCamera.enabled = false;
+
+        // request server to despawn us
+        SendDespawnRequestServerRpc();
+    }
+
+    [ServerRpc]
+    private void SendDespawnRequestServerRpc()
+    {
+        NetworkObject.Despawn(gameObject);
     }
 
 
     private IEnumerator RunDeathCam(float duration)
     {
-        // this shit does all of the death logic from clean up to death screen to sending a request to the server to respawn
-
         // Unparent the camera so it's not affected by the ragdoll
         playerCamera.transform.SetParent(null);
 

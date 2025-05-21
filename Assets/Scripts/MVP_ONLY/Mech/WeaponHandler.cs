@@ -10,6 +10,7 @@
 using System.Collections;
 using UnityEngine;
 using Unity.Netcode;
+using System.Collections.Generic;
 public class WeaponHandler : NetworkBehaviour
 {
     private ulong LOCAL_CLIENT_ID;
@@ -42,10 +43,6 @@ public class WeaponHandler : NetworkBehaviour
     public float primaryOverheatCooldown = 0f;
     public float secondaryOverheatCooldown = 0f;
 
-
-    // GameObject references
-    private GameObject primaryWeaponInstance;
-    private GameObject secondaryWeaponInstance;
     private GameObject primaryMuzzleFlash;
     private GameObject secondaryMuzzleFlash;
 
@@ -59,6 +56,14 @@ public class WeaponHandler : NetworkBehaviour
     private bool hasFiredPrimary = false;
     private bool hasFiredSecondary = false;
 
+
+    // server's projectiles
+    [SerializeField] private GameObject tempServerGrenadePrefab;
+    [SerializeField] private GameObject tempServerMissilePrefab;
+
+
+    // storing client's projectiles
+    private Dictionary<ulong, GameObject> clientProjectiles = new Dictionary<ulong, GameObject>();
 
     // input buffer
     public struct WeaponFireInput
@@ -87,6 +92,13 @@ public class WeaponHandler : NetworkBehaviour
         public float range;
         public float fireRateTicks;
         public bool isHitscan;
+        public ProjectileType projectileType;
+        public float projectileMass;
+        public float projectileSpeed;
+        public float projectileGravity;
+        public float explosionRadius;
+        public float firstBounchExplosionExpiryTime;
+        public float timeBeforeCanManuallyExplode;
 
         public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter
         {
@@ -95,6 +107,13 @@ public class WeaponHandler : NetworkBehaviour
             serializer.SerializeValue(ref range);
             serializer.SerializeValue(ref fireRateTicks);
             serializer.SerializeValue(ref isHitscan);
+            serializer.SerializeValue(ref projectileType);
+            serializer.SerializeValue(ref projectileMass);
+            serializer.SerializeValue(ref projectileSpeed);
+            serializer.SerializeValue(ref projectileGravity);
+            serializer.SerializeValue(ref explosionRadius);
+            serializer.SerializeValue(ref firstBounchExplosionExpiryTime);
+            serializer.SerializeValue(ref timeBeforeCanManuallyExplode);
         }
 
         public static WeaponInfo FromWeapon(Weapon weapon)
@@ -105,7 +124,14 @@ public class WeaponHandler : NetworkBehaviour
                 damage = weapon.damage,
                 range = weapon.range,
                 fireRateTicks = weapon.fireRateTicks,
-                isHitscan = weapon.isHitscan
+                isHitscan = weapon.isHitscan,
+                projectileType = weapon.projectileType,
+                projectileMass = weapon.projectileMass,
+                projectileSpeed = weapon.projectileSpeed,
+                projectileGravity = weapon.projectileGravity,
+                explosionRadius = weapon.explosionRadius,
+                firstBounchExplosionExpiryTime = weapon.firstBounchExplosionExpiryTime,
+                timeBeforeCanManuallyExplode = weapon.timeBeforeCanManuallyExplode
             };
         }
     }
@@ -128,18 +154,11 @@ public class WeaponHandler : NetworkBehaviour
         if (isPrimary)
         {
 
-            // Destroy any existing weapon
-            if (primaryWeaponInstance != null)
-                Destroy(primaryWeaponInstance);
-
-            // Instantiate placeholder weapon model (replace with actual model in the future)
-            primaryWeaponInstance = primaryWeaponMount.gameObject; // Assuming the pipe is already attached to the mount
-
             // Set up muzzle flash
             if (primaryMuzzleFlash != null)
                 Destroy(primaryMuzzleFlash);
 
-            primaryMuzzleFlash = Instantiate(weaponData.muzzleFlashPrefab, primaryWeaponInstance.transform);
+            primaryMuzzleFlash = Instantiate(weaponData.muzzleFlashPrefab, primaryWeaponMount.transform);
             primaryMuzzleFlash.SetActive(false);
 
             // Reset heat, cooldown and spread
@@ -172,18 +191,12 @@ public class WeaponHandler : NetworkBehaviour
         }
         else
         {
-            // Destroy existing weapon if any
-            if (secondaryWeaponInstance != null)
-                Destroy(secondaryWeaponInstance);
-
-            // Instantiate placeholder weapon model (replace with actual model in the future)
-            secondaryWeaponInstance = secondaryWeaponMount.gameObject; // Assuming the pipe is already attached to the mount
 
             // Set up muzzle flash
             if (secondaryMuzzleFlash != null)
                 Destroy(secondaryMuzzleFlash);
 
-            secondaryMuzzleFlash = Instantiate(weaponData.muzzleFlashPrefab, secondaryWeaponInstance.transform);
+            secondaryMuzzleFlash = Instantiate(weaponData.muzzleFlashPrefab, secondaryWeaponMount.transform);
             secondaryMuzzleFlash.SetActive(false);
 
             // Reset heat and cooldown
@@ -237,52 +250,174 @@ public class WeaponHandler : NetworkBehaviour
     }
 
     [ServerRpc]
-    private void HandleServerHitscanServerRpc(ulong clientTick, WeaponInfo weaponData, Vector3 clientOrigin, Vector3 clientDirection, ulong clientId)
+    private void HandleServerHitscanServerRpc(ulong clientTick, WeaponInfo weaponData, Vector3 clientOrigin, Vector3 clientDirection, ulong localClientId)
     {
 
-        if (handleLagCompensation.TryLagCompensatedRaycast(clientId, clientTick, clientOrigin, clientDirection, weaponData.range, out RaycastHit hitInfo))
+        RaycastHit hitInfo;
+
+        bool didHit = handleLagCompensation.TryLagCompensatedRaycast(localClientId, clientTick, clientOrigin, clientDirection, weaponData.range, out hitInfo);
+
+        string decalIdOfHitObject = "";
+
+        if (didHit)
         {
-
-
             if (hitInfo.collider.CompareTag("Player"))
             {
 
+                // get enemy player
                 NetworkObject enemyPlayer = hitInfo.collider.GetComponent<NetworkObject>();
 
+                // get the id of the enemy player
+                ulong enemyPlayerId = enemyPlayer.OwnerClientId;
 
-                enemyPlayer.GetComponent<HandleHealth>().TakeDamage(weaponData.damage, clientId);
+                // take damage
+                enemyPlayer.GetComponent<HandleHealth>().TakeDamage(weaponData.damage, localClientId);
 
-
-                Debug.Log($"Hitscan from client {clientId} -> Hit enemy client {enemyPlayer.OwnerClientId}");
-
+                
+                decalIdOfHitObject = "Player";
+            }
+            else
+            {
+                // we hit something else that isn't a player
+                decalIdOfHitObject = hitInfo.transform.GetComponent<DecalAnchor>().decalId;
             }
         }
+
+        
+        PlayFiringEffectsClientRpc(didHit, weaponData, clientOrigin, clientDirection, hitInfo.point, hitInfo.normal, decalIdOfHitObject);
         
         // show all other clients the shot
-
-        PlayFiringEffectsClientRpc(weaponData, clientOrigin, hitInfo.point, hitInfo.normal);
 
 
     }
 
+
+
+    [ServerRpc]
+    private void HandleServerProjectileServerRpc(ulong clientTick, WeaponInfo weaponData, Vector3 clientOrigin, Vector3 clientDirection, ulong localClientId)
+    {
+ 
+        float tickInterval = NetworkTimer.Singleton.GetTickInterval();
+        ulong currentServerTick = NetworkTimer.Singleton.CurrentTick.Value;
+        ulong ticksPassed = currentServerTick - clientTick;
+        float timePassed = ticksPassed * tickInterval;
+
+
+
+        // spawn server's projectile
+
+        // override client's projectile prefab with server's
+        GameObject tempServerProjectilePrefab = null;
+        // Vector3 predictedProjectileOrigin = clientOrigin + (clientDirection * weaponData.projectileSpeed * timePassed);
+        Vector3 projectileOrigin = clientOrigin;
+        Quaternion projectileRotation = Quaternion.LookRotation(clientDirection);
+
+        // minor adjustment for rocket
+        if (weaponData.projectileType == ProjectileType.Grenade)
+        {
+            
+            tempServerProjectilePrefab = tempServerGrenadePrefab;
+        }
+        else if (weaponData.projectileType == ProjectileType.Rocket)
+        {
+            tempServerProjectilePrefab = tempServerMissilePrefab;
+            projectileRotation *= Quaternion.Euler(90f, 0, 0);
+        }
+
+        GameObject projectile = Instantiate(tempServerProjectilePrefab, projectileOrigin, projectileRotation);
+        projectile.GetComponent<NetworkObject>().SpawnWithOwnership(localClientId);
+        projectile.GetComponent<ServerProjectile>().Initialize(localClientId, weaponData.projectileMass, weaponData.projectileSpeed, weaponData.damage, weaponData.explosionRadius, weaponData.projectileGravity, weaponData.projectileType);
+
+        UpdateProjectileForClientRpc(clientTick, ticksPassed);
+    }
+
     [ClientRpc]
-    private void PlayFiringEffectsClientRpc(WeaponInfo weaponInfo, Vector3 origin, Vector3 hitPoint, Vector3 hitNormal, ClientRpcParams rpcParams = default)
+    private void UpdateProjectileForClientRpc(ulong clientTick, ulong laggedTicks)
+    {
+        // only to show visuals on the client and NOT the actual projectile because that's already in since the server
+        if (IsOwner)
+        {
+            // if (clientProjectiles.ContainsKey(clientTick))
+            // {
+            //     // destroy the client's projectile
+            //     Destroy(clientProjectiles[clientTick]);
+            //     // remove the projectile index from the dictionary
+            //     clientProjectiles.Remove(clientTick);
+            // }
+            return;
+        }
+    }
+
+
+    [ClientRpc]
+    private void PlayFiringEffectsClientRpc(bool didHit, WeaponInfo weaponInfo, Vector3 origin, Vector3 direction, Vector3 hitPoint, Vector3 hitNormal, string decalIdOfHitObject, ClientRpcParams rpcParams = default)
     {
         if (IsOwner) return; // Don't run visuals on your own client again
 
         GameObject muzzle = weaponInfo.isPrimary ? primaryMuzzleFlash : secondaryMuzzleFlash;
-
+        
         if (muzzle != null)
             StartCoroutine(PlayMuzzleFlash(muzzle));
 
+
         PlayFireSound(weaponInfo.isPrimary ? primaryWeaponData.fireSound : secondaryWeaponData.fireSound, weaponInfo.isPrimary);
 
-        if (weaponInfo.isHitscan)
-        {
-            StartCoroutine(DrawTracer(muzzle.transform.position, hitPoint + hitNormal * 0.1f, Quaternion.LookRotation(hitPoint)));
-        }
 
-        // Optionally add bullet holes, impact FX if you trust the hit position (after lag compensation)
+        // if the client didn't hit anything
+        if (!didHit)
+        {
+            if (weaponInfo.isHitscan)
+            {
+                Vector3 missPoint = origin + direction * weaponInfo.range;
+                StartCoroutine(DrawTracer(muzzle.transform.position, missPoint, Quaternion.LookRotation(missPoint)));
+            }
+        }
+        else
+        {
+            if (weaponInfo.isHitscan)
+            {
+                StartCoroutine(DrawTracer(muzzle.transform.position, (hitPoint + hitNormal * 0.1f), Quaternion.LookRotation(hitPoint)));
+
+                if (decalIdOfHitObject != "" && decalIdOfHitObject.Length > 0)
+                {
+                    // spawn impact and bullet hole decals
+                    if (primaryWeaponData.impactEffectPrefab != null)
+                    {
+                        GameObject impact = Instantiate(
+                            primaryWeaponData.impactEffectPrefab,
+                            (hitPoint),
+                            Quaternion.LookRotation(hitNormal)
+                        );
+                        Destroy(impact, 2f);
+                    }
+
+                    if (primaryWeaponData.bulletHolePrefab != null)
+                    {
+                        GameObject bulletHole = Instantiate(
+                            primaryWeaponData.bulletHolePrefab,
+                            (hitPoint + hitNormal * 0.01f),
+                            Quaternion.LookRotation(-hitNormal)
+                        );
+
+                        DecalAnchor[] anchors = GameObject.FindObjectsByType<DecalAnchor>(sortMode: FindObjectsSortMode.None);
+
+                        foreach (DecalAnchor anchor in anchors)
+                        {
+                            if (anchor.decalId == decalIdOfHitObject)
+                            {
+                                bulletHole.transform.SetParent(anchor.transform);
+                            }
+                        }
+                        Destroy(bulletHole, 5f);
+                    }
+                }
+            }
+            else
+            {
+                // projectile effects
+
+            }
+        } 
     }
 
 
@@ -314,7 +449,7 @@ public class WeaponHandler : NetworkBehaviour
 
             // Client-side raycast for prediction
             RaycastHit predictedHitInfo;
-            bool predictedDidHit = Physics.Raycast(rayOrigin, rayDirection, out predictedHitInfo, weaponData.range, ~LayerMask.GetMask("Projectiles&Bullets", "LocalPlayer"));
+            bool predictedDidHit = Physics.Raycast(rayOrigin, rayDirection, out predictedHitInfo, weaponData.range, ~LayerMask.GetMask("Projectiles_Client", "Projectiles_Server", "LocalPlayer"));
 
             // Show immediate visuals
             HandleClientHitscanVisuals(weaponData, rayOrigin, rayDirection, predictedDidHit, predictedHitInfo);
@@ -327,23 +462,64 @@ public class WeaponHandler : NetworkBehaviour
         }
         else
         {
-            // // fire from respective muzzle for projectile weapons
-            // if (isPrimary)
-            // {
-            //     FireProjectileWeapon(weapon, primaryMuzzleFlash.transform.position, rayDirection);
-            // }
-            // else
-            // {
-            //     FireProjectileWeapon(weapon, secondaryMuzzleFlash.transform.position, rayDirection);
-            // }
+            Vector3 muzzlePosition = isPrimary ? primaryMuzzleFlash.transform.position : secondaryMuzzleFlash.transform.position;
+            Vector3 direction = playerCamera.transform.forward;
+
+            // Calculate spawn position with offset
+            float spawnOffset = 0.5f;
+            Vector3 spawnPosition = muzzlePosition + (direction.normalized * spawnOffset);
+
+            HandleClientProjectileVisuals(currentTick, weaponData, spawnPosition, direction);
         }
+    }
+
+
+    private void HandleClientProjectileVisuals(ulong currentTick, Weapon weaponData, Vector3 spawnPosition, Vector3 direction)
+    {
+        if (weaponData.projectilePrefab == null) return;
+
+        // Get target point using raycast
+        int mask = ~LayerMask.GetMask("Projectiles_Client", "Projectiles_Server");
+        RaycastHit hitInfo;
+        Vector3 targetDirection;
+
+        if (Physics.Raycast(playerCamera.transform.position, direction, out hitInfo, 1000f, mask))
+        {
+            // If we hit something, use the hit point
+            targetDirection = hitInfo.point - spawnPosition;
+            Debug.DrawRay(spawnPosition, targetDirection, Color.green, 5f);
+            Debug.DrawRay(playerCamera.transform.position, hitInfo.point - playerCamera.transform.position, Color.red, 5f);
+        }
+        else
+        {
+            // If we didn't hit anything, use a point far away
+            Vector3 directionOffset = playerCamera.transform.position + direction * 1000f;
+            targetDirection = directionOffset - spawnPosition;
+            Debug.DrawRay(spawnPosition, targetDirection, Color.green, 5f);
+            Debug.DrawRay(playerCamera.transform.position, directionOffset - playerCamera.transform.position, Color.red, 5f);
+        }
+
+
+        if (weaponData.projectileType == ProjectileType.Grenade)
+        {
+            // spawn grenade
+            clientProjectiles[currentTick] = Instantiate(weaponData.projectilePrefab, spawnPosition, Quaternion.LookRotation(targetDirection));
+            clientProjectiles[currentTick].GetComponent<Projectile>().Initialize(weaponData.projectileMass, weaponData.projectileSpeed, weaponData.projectileGravity, weaponData.projectileType);
+        }
+        else if (weaponData.projectileType == ProjectileType.Rocket)
+        {
+            // spawn rocket
+            clientProjectiles[currentTick] = Instantiate(weaponData.projectilePrefab, spawnPosition, Quaternion.LookRotation(targetDirection) * Quaternion.Euler(90f, 0, 0));
+            clientProjectiles[currentTick].GetComponent<Projectile>().Initialize(weaponData.projectileMass, weaponData.projectileSpeed, weaponData.projectileGravity, weaponData.projectileType);
+        }
+
+        HandleServerProjectileServerRpc(currentTick, WeaponInfo.FromWeapon(weaponData), spawnPosition, targetDirection, LOCAL_CLIENT_ID);
+
     }
 
 
     private void HandleClientHitscanVisuals(Weapon weapon, Vector3 origin, Vector3 direction, bool didHit, RaycastHit hitInfo)
     {
-        
-
 
         bool isPrimary = weapon.IsPrimary;
         GameObject muzzle = isPrimary ? primaryMuzzleFlash : secondaryMuzzleFlash;
@@ -355,6 +531,7 @@ public class WeaponHandler : NetworkBehaviour
         // Fire sound
         PlayFireSound(weapon.fireSound, isPrimary);
 
+
         // Impact visuals
         if (didHit)
         {
@@ -362,7 +539,6 @@ public class WeaponHandler : NetworkBehaviour
             if (hitInfo.collider.CompareTag("Player"))
             {
                 NetworkObject enemyPlayer = hitInfo.collider.GetComponent<NetworkObject>();
-                Debug.Log($"Hitscan from client {NetworkObject.OwnerClientId} -> Hit enemy client {enemyPlayer.OwnerClientId}");
             }
 
             if (weapon.impactEffectPrefab != null)
@@ -403,63 +579,12 @@ public class WeaponHandler : NetworkBehaviour
                 StartCoroutine(DrawTracer(
                     muzzle.transform.position,
                     missPoint,
-                    Quaternion.LookRotation(hitInfo.point)
+                    Quaternion.LookRotation(missPoint)
                 ));
             }
         }
     }
 
-
-    // projectile related logic
-    private void FireProjectileWeapon(Weapon weapon, Vector3 muzzlePosition, Vector3 direction)
-    {
-        // Calculate spawn position with offset
-        float spawnOffset = 0.5f;
-        Vector3 spawnPosition = muzzlePosition + (direction.normalized * spawnOffset);
-
-        // Get target point using raycast
-        int mask = ~LayerMask.GetMask("Projectiles&Bullets");
-        RaycastHit hitInfo;
-        Vector3 targetDirection;
-
-        if (Physics.Raycast(playerCamera.transform.position, direction, out hitInfo, 1000f, mask))
-        {
-            // If we hit something, use the hit point
-            targetDirection = hitInfo.point - spawnPosition;
-            Debug.DrawRay(spawnPosition, targetDirection, Color.green, 5f);
-            Debug.DrawRay(playerCamera.transform.position, hitInfo.point - playerCamera.transform.position, Color.red, 5f);
-        }
-        else
-        {
-            // If we didn't hit anything, use a point far away
-            Vector3 directionOffset = playerCamera.transform.position + direction * 1000f;
-            targetDirection = directionOffset - spawnPosition;
-            Debug.DrawRay(spawnPosition, targetDirection, Color.green, 5f);
-        }
-
-        // Spawn the projectile
-        if (weapon.projectilePrefab != null)
-        {
-            GameObject projectile = Instantiate(
-                weapon.projectilePrefab,
-                spawnPosition,
-                Quaternion.LookRotation(targetDirection) * Quaternion.Euler(90f, 0, 0)
-            );
-
-            // Configure the projectile
-            Projectile projectileScript = projectile.GetComponent<Projectile>();
-            if (projectileScript != null)
-            {
-                projectileScript.Initialize(
-                    targetDirection,
-                    weapon.projectileSpeed,
-                    weapon.damage,
-                    weapon.explosionRadius,
-                    weapon.projectileGravity
-                );
-            }
-        }
-    }
 
     private Vector3 CalculateSpreadDirection(Vector3 direction, float spread)
     {
@@ -657,7 +782,7 @@ public class WeaponHandler : NetworkBehaviour
 
         if (!IsOwner) return;
 
-        LOCAL_CLIENT_ID = NetworkManager.LocalClient.ClientId;
+        LOCAL_CLIENT_ID = OwnerClientId;
     }
 
     // gather input

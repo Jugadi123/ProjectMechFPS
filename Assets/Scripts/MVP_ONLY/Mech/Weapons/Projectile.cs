@@ -1,64 +1,131 @@
 using UnityEngine;
-
+using System.Collections.Generic;
 public class Projectile : MonoBehaviour
 {
+    // global projectile variables
     private Rigidbody rb;
-    private Vector3 origin;
     private Vector3 direction;
-    private float damage;
-    private float explosionRadius;
-    private float gravity;
-    
-    // Projectile settings
-    public float maxRange = 100f;
-    public float projectileSpeed = 5f;
-    public Vector3 currentVelocity;
-    
-    public void Initialize(Vector3 direction, float speed, float damage, float explosionRadius, float gravity)
+    private float projectileSpeed;
+    private ProjectileType projectileType;
+    private Vector3 projectileVelocity;
+    public LineRenderer lineRenderer;
+    private Vector3 projectileGravity;
+    private int projectileBounces;
+
+    public void Initialize(float mass, float speed, float gravity, ProjectileType type)
     {
-        this.direction = direction.normalized;
-        this.damage = damage;
-        this.explosionRadius = explosionRadius;
-        this.projectileSpeed = speed;
-        this.gravity = gravity;
-        // Setup rigidbody
         rb = GetComponent<Rigidbody>();
-        rb.mass = 0.7f;
-        origin = transform.position;
-        
+        projectileType = type;
+        projectileSpeed = speed;
+        rb.mass = mass;
+        rb.useGravity = false;
+        projectileGravity = new Vector3(0f, gravity, 0f);
+        rb.isKinematic = false;
+        rb.detectCollisions = true;
+        rb.collisionDetectionMode = CollisionDetectionMode.Continuous;
+
         // Store initial direction
-        this.direction = transform.up; // Using up direction due to mesh rotation
-        
-        // Destroy after 10 seconds in case it never hits anything
-        Destroy(gameObject, 10f);
+        if (projectileType == ProjectileType.Grenade)
+        {
+            direction = transform.forward;
+        }
+        else if (projectileType == ProjectileType.Rocket)
+        {
+            direction = transform.up;
+        }
     }
-    
+
+
+    private void Start()
+    {
+        if (projectileType == ProjectileType.Grenade)
+        {
+            // launch right away
+            projectileVelocity = direction * projectileSpeed;
+            rb.AddForce(projectileVelocity, ForceMode.Impulse);
+        }
+    }
+
     void FixedUpdate()
     {
-        // Apply constant force in the direction
-
-        Vector3 velocity = direction * projectileSpeed;
-        velocity.y += gravity * NetworkTimer.Singleton.GetTickInterval(); // use tick interval
-        rb.AddForce(velocity, ForceMode.Force);
-
+        HandleProjectiles();
     }
 
-    void OnTriggerEnter(Collider collision)
+    private void HandleProjectiles()
     {
-        if (collision.transform.CompareTag("Player")) 
+        if (projectileType == ProjectileType.Rocket)
         {
-            // TODO: Implement damage logic
-            // DamageManager.ApplyDamage(collision.gameObject, damage);
+            projectileVelocity = direction * projectileSpeed;
+            rb.AddForce(projectileVelocity, ForceMode.Impulse);
         }
-        
-        // Handle explosion if needed
-        if (explosionRadius > 0)
+
+        if (projectileType == ProjectileType.Grenade)
         {
-            // TODO: Implement explosion logic
-            // Spawn explosion effects
-            // Apply area damage
+            rb.AddForce(projectileGravity, ForceMode.Acceleration);
+            ShowTrajectory(transform.position, rb.linearVelocity, projectileSpeed, Physics.gravity.y, projectileType);
         }
-        
-        Destroy(gameObject);
+
     }
+
+
+    private void OnTriggerEnter(Collider collision)
+    {
+
+        if (projectileType == ProjectileType.Grenade)
+        {
+            // handle bouncing
+            projectileBounces++;
+            if (projectileBounces >= 1)
+            {
+                // NetworkObject.DeferDespawn(2, true);
+            }
+            // Destroy(gameObject); // destroy the projectile
+        }
+        else if (projectileType == ProjectileType.Rocket)
+        {
+            // handle collision
+            Destroy(gameObject); // destroy the projectile
+        }
+
+    }
+
+
+    public static List<Vector3> SimulateTrajectory(Vector3 startPos, Vector3 initialVelocity, float gravityY, float stepTime, int maxSteps, ProjectileType projectileType)
+    {
+        List<Vector3> points = new List<Vector3>();
+        Vector3 position = startPos;
+        Vector3 velocity = initialVelocity;
+        Vector3 gravity = new Vector3(0f, gravityY, 0f);
+
+        for (int i = 0; i < maxSteps; i++)
+        {
+            points.Add(position);
+
+            velocity += gravity * stepTime;
+            position += velocity * stepTime;
+
+            // Optional: raycast to detect early impact
+            if (Physics.Raycast(position, velocity.normalized, out RaycastHit hit, velocity.magnitude * stepTime, layerMask: ~LayerMask.GetMask("LocalPlayer", "Projectiles_Client", "Projectiles_Server")))
+            {
+                if (projectileType == ProjectileType.Grenade)
+                {
+                    Vector3 reflected = Vector3.Reflect(velocity, hit.normal);
+                    velocity = reflected * 0.1f;
+                }
+            }
+        }
+
+        return points;
+    }
+
+    private void ShowTrajectory(Vector3 startPos, Vector3 direction, float speed, float gravityY, ProjectileType projectileType)
+    {
+        Vector3 velocity = direction.normalized * speed;
+
+        List<Vector3> points = SimulateTrajectory(startPos, velocity, gravityY, 0.1f, 100, projectileType);
+
+        lineRenderer.positionCount = points.Count;
+        lineRenderer.SetPositions(points.ToArray());
+    }
+
 } 

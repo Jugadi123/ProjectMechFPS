@@ -20,9 +20,6 @@ public class HandleMovement : NetworkBehaviour {
     public Vector3 horizontalMoveDirection;
     public bool IsMovingHorizontally = false;
 
-    // Getting the NetworkSimulator instance for simulating network conditions
-    private NetworkSimulator networkSimulator;
-
     // Get netvars from PlayerNetvars
     public PlayerNetvars playerNetvars;
 
@@ -67,25 +64,8 @@ public class HandleMovement : NetworkBehaviour {
 
     public override void OnNetworkSpawn()
     {
-        if (IsOwner)
-        {
-            networkSimulator = FindFirstObjectByType<NetworkSimulator>();
-        }
+
     }
-
-
-    // === DEBUG NETWORK TESTING ===
-    private void SimulateNetworkConditionsForDebug()
-    {
-        if (IsOwner) {
-            if (Input.GetKeyDown(KeyCode.F))
-                networkSimulator?.TriggerLagSpike(System.TimeSpan.FromMilliseconds(500));
-
-            if (Input.GetKeyDown(KeyCode.G))
-                networkSimulator?.Disconnect();
-        }
-    }
-
 
     void HandleVerticalMovement(float inputZ)
     {
@@ -296,9 +276,6 @@ public class HandleMovement : NetworkBehaviour {
             );
             sprintKey = Input.GetKey(KeyCode.LeftShift);
             dashKey = Input.GetKey(KeyCode.C);
-
-            // Simulate network conditions for debugging
-            SimulateNetworkConditionsForDebug();
         }
         else if (!IsServer)
         {

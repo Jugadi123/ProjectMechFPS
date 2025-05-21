@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   weaponType: 0
   weaponName: RPG-1
-  IsPrimary: 0
+  IsPrimary: 1
   weaponModel: {fileID: 0}
   muzzleFlashPrefab: {fileID: 32169606653991175, guid: b4e06ec543d1c4cf1b4399d7c2ea3878, type: 3}
   fireSound: {fileID: 0}
@@ -33,7 +33,11 @@ MonoBehaviour:
   bulletHolePrefab: {fileID: 3437513179833019632, guid: 6c436386756a845e48d1758fe6bd4202, type: 3}
   tracerPrefab: {fileID: 6431433845162647267, guid: 949e479f2f06e4657b1c284cddbca1bc, type: 3}
   isHitscan: 0
+  projectileType: 2
   projectilePrefab: {fileID: 7126355240600540162, guid: 9ab6349b1ea1544bab9bf405ddfe5ef6, type: 3}
-  projectileSpeed: 50
-  projectileGravity: -9.8
+  projectileMass: 0.7
+  projectileSpeed: 8
+  projectileGravity: 0
   explosionRadius: 0
+  firstBounchExplosionExpiryTime: 0
+  timeBeforeCanManuallyExplode: 0

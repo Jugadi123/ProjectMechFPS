@@ -18,8 +18,8 @@ TagManager:
   - RemotePlayer
   - Map
   - Projectiles&Bullets
-  - 
-  - 
+  - Projectiles_Client
+  - Projectiles_Server
   - 
   - 
   - 

@@ -28,16 +28,17 @@ public class grenadeProjectile : MonoBehaviour
     {
         // detect first hit
 
-        if (collision.transform.tag == "Player") {
+        if (collision.transform.tag == "Player")
+        {
             // damage logic
-
-
             Destroy(gameObject);
             return;
         }
-
-        if (!StartExplosionTimer) {
-            StartExplosionTimer = true;
+        else
+        {
+            if (!StartExplosionTimer) {
+                StartExplosionTimer = true;
+            }
         }
     }
 
@@ -65,16 +66,13 @@ public class grenadeProjectile : MonoBehaviour
             }
         }
 
-        // checking for any collisions or mid air explosions, etc (server tick rate)
+        // checking for the first bounce
         if (StartExplosionTimer) {
             timeElapsedSinceFirstBounce += Time.fixedDeltaTime;
             if (timeElapsedSinceFirstBounce > expiryTime) {
                 Destroy(gameObject);
                 timeElapsedSinceFirstBounce = 0f;
                 StartExplosionTimer = false;
-            }
-            else {
-                // Debug.Log(timeElapsedSinceFirstBounce);
             }
         }
     }
