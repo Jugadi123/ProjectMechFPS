@@ -4,6 +4,7 @@ using Unity.Netcode;
 public class ServerProjectile : NetworkBehaviour
 {
     private Rigidbody rb;
+    private Collider projectileCollider;
     private Vector3 direction;
     private float projectileDamage;
     private float projectileExplosionRadius;
@@ -31,6 +32,8 @@ public class ServerProjectile : NetworkBehaviour
         rb.isKinematic = false;
         rb.detectCollisions = true;
         rb.collisionDetectionMode = CollisionDetectionMode.Continuous;
+        projectileCollider = GetComponent<Collider>();
+        projectileCollider.isTrigger = false;
 
         if (projectileType == ProjectileType.Grenade)
         {
@@ -41,20 +44,30 @@ public class ServerProjectile : NetworkBehaviour
             direction = transform.up;
         }
     }
-    
 
+    // only for clients unless running in HOST mode
     public override void OnNetworkSpawn()
     {
         if (IsOwner)
         {
             // "hide" the projectile for the firing client
+            GetComponent<MeshRenderer>().enabled = false;
 
+            
         }
     }
 
     private void Start()
     {
+
         if (!IsServer) return;
+
+        // holy fuck it took me an entire day to figure this out
+        // like bro
+        // Why would we bounce a projectile off of a player in the first place?
+        // If it's a direct hit on a player, then we should just destroy the projectile and deal damage to the player.
+        // wtf ?????? 12:37 AM....
+        // WE DIDN'T NEED TO IGNORE THE PLAYER COLLISIONS IN THE FIRST PLACE
 
         if (projectileType == ProjectileType.Grenade)
         {
@@ -82,7 +95,7 @@ public class ServerProjectile : NetworkBehaviour
         }
     }
 
-    private void OnTriggerEnter(Collider collision)
+    private void OnCollisionEnter(Collision collision)
     {
 
         if (!IsServer) return;
@@ -92,10 +105,12 @@ public class ServerProjectile : NetworkBehaviour
             if (collision.transform.CompareTag("Player"))
             {
                 // get the player's id
-                NetworkObject collidedPlayer = collision.GetComponent<NetworkObject>();
+                NetworkObject collidedPlayer = collision.collider.GetComponent<NetworkObject>();
 
                 // get the id of the enemy player
                 ulong collidedPlayerId = collidedPlayer.OwnerClientId;
+
+                // if (collidedPlayerId == localClientId) return;
 
                 // take damage
                 collidedPlayer.GetComponent<HandleHealth>().TakeDamage(projectileDamage, localClientId);
@@ -108,7 +123,7 @@ public class ServerProjectile : NetworkBehaviour
             projectileBounces++;
             if (projectileBounces >= 1)
             {
-                // NetworkObject.DeferDespawn(2, true);
+              
             }
         }
         else if (projectileType == ProjectileType.Rocket)
@@ -116,13 +131,17 @@ public class ServerProjectile : NetworkBehaviour
             if (collision.transform.CompareTag("Player"))
             {
                 // get the player's id
-                NetworkObject collidedPlayer = collision.GetComponent<NetworkObject>();
+                NetworkObject collidedPlayer = collision.collider.GetComponent<NetworkObject>();
 
                 // get the id of the enemy player
                 ulong collidedPlayerId = collidedPlayer.OwnerClientId;
 
                 // take damage
                 collidedPlayer.GetComponent<HandleHealth>().TakeDamage(projectileDamage, localClientId);
+
+
+
+                Debug.Log("Collided with player " + collidedPlayerId);
 
                 NetworkObject.Despawn(gameObject);
                 return;

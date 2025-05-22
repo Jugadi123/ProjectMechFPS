@@ -8,7 +8,7 @@ TagManager:
   - Default
   - TransparentFX
   - Ignore Raycast
-  - 
+  - Client_Projectile
   - Water
   - UI
   - LocalPlayer
@@ -18,8 +18,8 @@ TagManager:
   - RemotePlayer
   - Map
   - Projectiles&Bullets
-  - Projectiles_Client
-  - Projectiles_Server
+  - Server_Projectile
+  - 
   - 
   - 
   - 

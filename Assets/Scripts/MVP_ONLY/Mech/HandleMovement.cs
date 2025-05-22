@@ -1,7 +1,5 @@
 using UnityEngine;
 using Unity.Netcode;
-using System.Collections;
-using Unity.Multiplayer.Tools.NetworkSimulator.Runtime;
 
 public class HandleMovement : NetworkBehaviour {
 
@@ -13,8 +11,6 @@ public class HandleMovement : NetworkBehaviour {
     // IMPORT doubletap.cs
     [SerializeField] private DoubleTap doubleTapHandler;
 
-    // player's current speed
-    private float currentPlayerSpeed;
     // Player's current velocity
     public Vector3 currentPlayerVelocity;
     public Vector3 horizontalMoveDirection;
@@ -162,9 +158,6 @@ public class HandleMovement : NetworkBehaviour {
         {
             targetSpeed = playerNetvars.playerSprintSpeed.Value;
         }
-
-        // Smooth current speed toward target speed
-        // float smoothSpeed = Mathf.Lerp(currentPlayerSpeed, targetSpeed, tickInterval * playerNetvars.playerAcceleration.Value);
 
         // Update velocity
         Vector3 newHorizontalVelocity = horizontalMoveDirection * targetSpeed;

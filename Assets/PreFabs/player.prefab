@@ -27253,7 +27253,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1412943521695208284}
-  - component: {fileID: 9032555669634233160}
+  - component: {fileID: 6009606077121671362}
   - component: {fileID: 2291646223527682074}
   - component: {fileID: -2348650890616440137}
   - component: {fileID: 3165469521244010512}
@@ -27291,7 +27291,7 @@ Transform:
   - {fileID: 184880003458868478}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!143 &9032555669634233160
+--- !u!143 &6009606077121671362
 CharacterController:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -27579,7 +27579,7 @@ MonoBehaviour:
   secondaryWeaponMount: {fileID: 4851872726184842597}
   playerCamera: {fileID: 1525372228605417306}
   primaryWeaponData: {fileID: 11400000, guid: 8949d210303294e3db59f3df9a28f6da, type: 2}
-  secondaryWeaponData: {fileID: 11400000, guid: c8879d37e1804437790393b87a345d20, type: 2}
+  secondaryWeaponData: {fileID: 11400000, guid: 5fe5bf1d86d3043028cb1eabca310c66, type: 2}
   primaryCurrentHeat: 0
   secondaryCurrentHeat: 0
   IsPrimaryOverheated: 0

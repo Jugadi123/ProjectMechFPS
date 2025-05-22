@@ -449,7 +449,7 @@ public class WeaponHandler : NetworkBehaviour
 
             // Client-side raycast for prediction
             RaycastHit predictedHitInfo;
-            bool predictedDidHit = Physics.Raycast(rayOrigin, rayDirection, out predictedHitInfo, weaponData.range, ~LayerMask.GetMask("Projectiles_Client", "Projectiles_Server", "LocalPlayer"));
+            bool predictedDidHit = Physics.Raycast(rayOrigin, rayDirection, out predictedHitInfo, weaponData.range, ~LayerMask.GetMask("LocalPlayer"));
 
             // Show immediate visuals
             HandleClientHitscanVisuals(weaponData, rayOrigin, rayDirection, predictedDidHit, predictedHitInfo);
@@ -479,7 +479,7 @@ public class WeaponHandler : NetworkBehaviour
         if (weaponData.projectilePrefab == null) return;
 
         // Get target point using raycast
-        int mask = ~LayerMask.GetMask("Projectiles_Client", "Projectiles_Server");
+        int mask = ~LayerMask.GetMask("LocalPlayer");
         RaycastHit hitInfo;
         Vector3 targetDirection;
 
@@ -512,6 +512,8 @@ public class WeaponHandler : NetworkBehaviour
             clientProjectiles[currentTick] = Instantiate(weaponData.projectilePrefab, spawnPosition, Quaternion.LookRotation(targetDirection) * Quaternion.Euler(90f, 0, 0));
             clientProjectiles[currentTick].GetComponent<Projectile>().Initialize(weaponData.projectileMass, weaponData.projectileSpeed, weaponData.projectileGravity, weaponData.projectileType);
         }
+
+        Debug.Log($"local player id {LOCAL_CLIENT_ID}");
 
         HandleServerProjectileServerRpc(currentTick, WeaponInfo.FromWeapon(weaponData), spawnPosition, targetDirection, LOCAL_CLIENT_ID);
 

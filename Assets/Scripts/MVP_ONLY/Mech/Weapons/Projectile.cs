@@ -4,6 +4,7 @@ public class Projectile : MonoBehaviour
 {
     // global projectile variables
     private Rigidbody rb;
+    private Collider projectileCollider;
     private Vector3 direction;
     private float projectileSpeed;
     private ProjectileType projectileType;
@@ -23,7 +24,8 @@ public class Projectile : MonoBehaviour
         rb.isKinematic = false;
         rb.detectCollisions = true;
         rb.collisionDetectionMode = CollisionDetectionMode.Continuous;
-
+        projectileCollider = GetComponent<Collider>();
+        projectileCollider.isTrigger = false;
         // Store initial direction
         if (projectileType == ProjectileType.Grenade)
         {
@@ -38,6 +40,10 @@ public class Projectile : MonoBehaviour
 
     private void Start()
     {
+        // ignore the server's projectile. we dont want the client's predicted projectile to collide with the server's projectile
+        int serverProjectileLayer = LayerMask.NameToLayer("Server_Projectile");
+        Physics.IgnoreLayerCollision(gameObject.layer, serverProjectileLayer);
+
         if (projectileType == ProjectileType.Grenade)
         {
             // launch right away
@@ -62,14 +68,21 @@ public class Projectile : MonoBehaviour
         if (projectileType == ProjectileType.Grenade)
         {
             rb.AddForce(projectileGravity, ForceMode.Acceleration);
-            ShowTrajectory(transform.position, rb.linearVelocity, projectileSpeed, Physics.gravity.y, projectileType);
+            ShowTrajectory(transform.position, rb.linearVelocity, projectileSpeed, projectileGravity.y, projectileType);
         }
 
     }
 
 
-    private void OnTriggerEnter(Collider collision)
+    private void OnCollisionEnter(Collision collision)
     {
+        Debug.Log($"Collision: {collision.transform.tag}");
+
+        if (collision.transform.CompareTag("Player"))
+        {
+            Destroy(gameObject); // destroy the projectile
+            return;
+        }
 
         if (projectileType == ProjectileType.Grenade)
         {
@@ -77,9 +90,8 @@ public class Projectile : MonoBehaviour
             projectileBounces++;
             if (projectileBounces >= 1)
             {
-                // NetworkObject.DeferDespawn(2, true);
+                
             }
-            // Destroy(gameObject); // destroy the projectile
         }
         else if (projectileType == ProjectileType.Rocket)
         {
@@ -105,7 +117,7 @@ public class Projectile : MonoBehaviour
             position += velocity * stepTime;
 
             // Optional: raycast to detect early impact
-            if (Physics.Raycast(position, velocity.normalized, out RaycastHit hit, velocity.magnitude * stepTime, layerMask: ~LayerMask.GetMask("LocalPlayer", "Projectiles_Client", "Projectiles_Server")))
+            if (Physics.Raycast(position, velocity.normalized, out RaycastHit hit, velocity.magnitude * stepTime, layerMask: ~LayerMask.GetMask("LocalPlayer")))
             {
                 if (projectileType == ProjectileType.Grenade)
                 {

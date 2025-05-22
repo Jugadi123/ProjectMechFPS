@@ -17,7 +17,7 @@ GameObject:
   - component: {fileID: 4227567859179270773}
   - component: {fileID: -7225732940821257736}
   - component: {fileID: -7311252204122358588}
-  m_Layer: 13
+  m_Layer: 3
   m_Name: Missile
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -782,7 +782,7 @@ CapsuleCollider:
     serializedVersion: 2
     m_Bits: 0
   m_LayerOverridePriority: 0
-  m_IsTrigger: 1
+  m_IsTrigger: 0
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 2

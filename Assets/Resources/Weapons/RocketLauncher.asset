@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   weaponType: 0
   weaponName: RPG-1
-  IsPrimary: 1
+  IsPrimary: 0
   weaponModel: {fileID: 0}
   muzzleFlashPrefab: {fileID: 32169606653991175, guid: b4e06ec543d1c4cf1b4399d7c2ea3878, type: 3}
   fireSound: {fileID: 0}
