@@ -1,5 +1,6 @@
 using UnityEngine;
 using Unity.Netcode;
+using System;
 public class NetworkTimer : NetworkBehaviour {
 
     public static NetworkTimer Singleton { get; private set; }
@@ -10,6 +11,10 @@ public class NetworkTimer : NetworkBehaviour {
     public const float SERVER_TICK_RATE = 60f;
     private float timer = 0f;
     public const float TickInterval = 1f / SERVER_TICK_RATE;
+
+
+    public static event Action OnTick;
+
 
     void Awake()
     {
@@ -29,16 +34,20 @@ public class NetworkTimer : NetworkBehaviour {
 
     void Update()
     {
-
-        if (!IsServer) {
-            return;
-        }
-
         timer += Time.deltaTime;
 
-        while (timer >= TickInterval) {
+        while (timer >= TickInterval)
+        {
             timer -= TickInterval;
-            CurrentTick.Value++;
+
+            OnTick?.Invoke();
+
+
+            if (IsServer)
+            {
+                CurrentTick.Value++;
+            }
+
         }
     }
 

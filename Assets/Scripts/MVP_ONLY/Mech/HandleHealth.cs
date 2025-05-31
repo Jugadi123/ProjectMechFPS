@@ -5,11 +5,9 @@ public class HandleHealth : NetworkBehaviour
 {
     public Canvas playerUICanvasManager;
     private PlayerNetvars playerNetvars;
-    private DeathManager deathManager;
-    private HandleMovement handleMovement;
     private WeaponHandler weaponHandler;
     private HandleRotation handleRotation;
-    private CameraEffects cameraEffects;
+    // private CameraEffects cameraEffects;
     private HandleLagCompensation handleLagCompensation;
 
     [SerializeField] private Camera playerCamera;
@@ -20,11 +18,9 @@ public class HandleHealth : NetworkBehaviour
     public override void OnNetworkSpawn()
     {
         playerNetvars = GetComponent<PlayerNetvars>();
-        deathManager = GetComponent<DeathManager>();
-        handleMovement = GetComponent<HandleMovement>();
         weaponHandler = GetComponent<WeaponHandler>();
         handleRotation = GetComponent<HandleRotation>();
-        cameraEffects = GetComponent<CameraEffects>();
+        // cameraEffects = GetComponent<CameraEffects>();
         handleLagCompensation = GetComponent<HandleLagCompensation>();
         playerNetvars.health.OnValueChanged += OnHealthChanged; // listen for health changes
     }
@@ -45,18 +41,26 @@ public class HandleHealth : NetworkBehaviour
     {
         // disable player ui
         playerUICanvasManager.enabled = false;
+
+
         // disable movement
-        // handleMovement.enabled = false;
+
+
         // disable weapon
         weaponHandler.enabled = false;
+
         // disable mouse rotation
-        // handleRotation.enabled = false;
+        handleRotation.enabled = false;
+
         // disable camera effects
-        cameraEffects.enabled = false;
+        // cameraEffects.enabled = false;
+
         // disable lag compensation
         handleLagCompensation.enabled = false;
-        // // disable health
+
+        // disable health
         // this.enabled = false;
+
         // disable cockpit camera
         cockpitCamera.enabled = false;
 

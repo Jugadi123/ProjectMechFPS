@@ -11,7 +11,6 @@ public class playerUICanvasManager : NetworkBehaviour {
 
     private WeaponHandler weaponHandler;
     private Transform healthBarContainer;
-    private RectTransform healthBarContainerRect;
     private Transform healthBarBar;
     private RectTransform healthBarRect;
     private float healthBarRectMaxWidth;
@@ -19,10 +18,6 @@ public class playerUICanvasManager : NetworkBehaviour {
     private Color colorBasedOnHealth;
 
     private Transform criticalHealthText;
-
-    private Transform crosshairContainer;
-    private RectTransform crosshairContainerRect;
-    private Transform crosshairCenterDot;
 
     private float heatBarRectMaxHeight;
     private Transform weaponHeatContainer;
@@ -44,11 +39,11 @@ public class playerUICanvasManager : NetworkBehaviour {
     // actual networked health
     public float realHealth;
 
-    private Vector2 defaultCrosshairContainerSize;
-    private Vector2 maxCrosshairContainerSize = new Vector2(145, 115);
+    private HandleMovement handleMovement;
+    [SerializeField] private Transform movementDebugText;
 
     public override void OnNetworkSpawn()
-    {   
+    {
         if (!IsOwner) return;
 
         Cursor.lockState = CursorLockMode.Locked;
@@ -59,7 +54,6 @@ public class playerUICanvasManager : NetworkBehaviour {
         realHealth = playerNetvars.health.Value;
 
         healthBarContainer = transform.GetChild(0);
-        healthBarContainerRect = healthBarContainer.GetComponent<RectTransform>();
 
         healthBarBar = healthBarContainer.GetChild(0);
         healthBarRect = healthBarBar.GetComponent<RectTransform>();
@@ -68,11 +62,6 @@ public class playerUICanvasManager : NetworkBehaviour {
 
         criticalHealthText = transform.GetChild(1);
         criticalHealthText.gameObject.SetActive(false);
-
-        crosshairContainer = transform.GetChild(2);
-        crosshairCenterDot = crosshairContainer.GetChild(8);
-        crosshairContainerRect = crosshairContainer.GetComponent<RectTransform>();
-        defaultCrosshairContainerSize = crosshairContainerRect.sizeDelta;
 
         weaponHeatContainer = transform.GetChild(3);
 
@@ -90,6 +79,8 @@ public class playerUICanvasManager : NetworkBehaviour {
 
         weaponHandler = GetComponentInParent<WeaponHandler>();
 
+
+        handleMovement = GetComponentInParent<HandleMovement>();
     }
 
 
@@ -188,5 +179,6 @@ public class playerUICanvasManager : NetworkBehaviour {
         realHealth = playerNetvars.health.Value;
         DisplayHealthUI();
         DisplayHeatUI();
+        movementDebugText.GetComponent<TextMeshProUGUI>().text = "Velocity: " + handleMovement.currentVelocity.ToString() + " | Speed: " + Mathf.Floor(handleMovement.currentVelocity.magnitude);
     }
 }

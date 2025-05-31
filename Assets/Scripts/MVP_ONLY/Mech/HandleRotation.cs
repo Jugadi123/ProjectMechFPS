@@ -1,151 +1,149 @@
 using UnityEngine;
 using Unity.Netcode;
+
 public class HandleRotation : NetworkBehaviour
 {
-    [SerializeField] Transform upperBody;
-    public float mouseSensitivity;
-    public float xRotation;
-    public float yRotation;
+    [Header("References")]
+    [SerializeField] Transform upperBody; // Pitch rotation
 
-    private struct MouseCommand {
-        public ulong tick;
-        public Vector2 input;
-    }
+    [Header("Rotation Settings")]
+    public float mouseSensitivity = 0.5f;
+    public float maxTurnSpeed = 400f;    // Degrees per second
+    public float pitchMin = -60f;      // Minimum pitch angle
+    public float pitchMax = 60f;       // Maximum pitch angle
 
-    private const int MouseInputBufferSize = 60;
-    private MouseCommand[] mouseInputBuffer = new MouseCommand[MouseInputBufferSize];
-    [SerializeField] private float rotationReconcileThreshold = 2f;
+    // Current rotation state
+    private float clientCurrentPitch = 0f;
+    private float clientCurrentYaw = 0f;
+    private float serverCurrentPitch = 0f;
+    private float serverCurrentYaw = 0f;
 
-    // for interpolation
-    private Quaternion fromYaw;
-    private Quaternion toYaw;
-    private Quaternion fromPitch;
-    private Quaternion toPitch;
-
-    private float interpTimer;
-    private float interpDuration;
-
+    // Network smoothing
+    public float rotationReconcileThreshold = 5f;
     
-    public override void OnNetworkSpawn()
+    private InputHandler inputHandler;
+    private InputHandler.InputCommand currentInputCommand;
+
+
+    private void Awake()
     {
-        xRotation = 0f;
-        yRotation = 0f;
+        inputHandler = GetComponent<InputHandler>();
     }
 
-    void Update()
+    private void Update()
     {
-        if (IsOwner) {
-            HandleMouseInput();
-        }
-        else if (!IsServer) {
-            // interpolate other player's rotations
-            InterpolateOtherRotations();
-        }
-    }
-
-    private void InterpolateOtherRotations()
-    {
-        interpTimer += Time.deltaTime;
-        float t = Mathf.Clamp01(interpTimer / interpDuration);
-
-        transform.rotation = Quaternion.Slerp(fromYaw, toYaw, t);
-        upperBody.localRotation = Quaternion.Slerp(fromPitch, toPitch, t);
-    }
-    
-
-    private void HandlePlayerRotation(float mouseX, float mouseY) {
-        // clamp pitch
-        xRotation += mouseY;
-        xRotation = Mathf.Clamp(xRotation, -60f, 60f);
-
-        // clamp yaw
-        yRotation += mouseX;
-        yRotation = (yRotation + 360f) % 360f;
-
-        // apply rotation
-        upperBody.localRotation = Quaternion.Euler(xRotation, 0f, 0f); // pitch
-        transform.rotation = Quaternion.Euler(0f, yRotation, 0f); // yaw
-    }
-
-    void HandleMouseInput() {
-        // get current tick
-        ulong currentTick = NetworkTimer.Singleton.CurrentTick.Value;
-
-        Vector2 mouseInput = new Vector2(Input.GetAxisRaw("Mouse X") * mouseSensitivity, Input.GetAxisRaw("Mouse Y") * mouseSensitivity);
-
-        // apply client prediction
-        HandlePlayerRotation(mouseInput.x, mouseInput.y);
-
-        // new mouse command
-        MouseCommand mouseCommand = new MouseCommand {
-            tick = currentTick,
-            input = mouseInput
-        };
-
-        // write to buffer
-        mouseInputBuffer[currentTick % MouseInputBufferSize] = mouseCommand;
-
-        // send to server
-        SendMouseInputToServerRpc(currentTick, mouseInput, xRotation, yRotation);
-    }
-
-
-   [ServerRpc]
-    private void SendMouseInputToServerRpc(ulong tick, Vector2 input, float clientXRotation, float clientYRotation)
-    {
-        // server applies input too
-        HandlePlayerRotation(input.x, input.y);
-
-        // compare rotation difference
-        float xError = Mathf.Abs(xRotation - clientXRotation);
-        float yError = Mathf.Abs(yRotation - clientYRotation);
-
-        if (xError > rotationReconcileThreshold || yError > rotationReconcileThreshold)
+        if (IsOwner)
         {
-            ReconcileClientRpc(xRotation, yRotation, tick);
+            currentInputCommand = inputHandler.GetCurrentInputCommand();
+            HandleLocalRotation(currentInputCommand);
         }
+        else
+        {
+            // todo interpolate remote client rotations
+        }
+    }
 
-        // Broadcast final rotation to other clients
-        BroadcastRotationClientRpc(xRotation, yRotation);
+    private void HandleLocalRotation(InputHandler.InputCommand inputCommand)
+    {
+        float tickInterval = NetworkTimer.Singleton.GetTickInterval();
+
+        // Calculate desired rotation changes
+        float desiredYawDelta = inputCommand.mouseInput.x * mouseSensitivity * maxTurnSpeed * tickInterval;
+        float desiredPitchDelta = inputCommand.mouseInput.y * mouseSensitivity * maxTurnSpeed * tickInterval;
+
+        // Apply HARD turn rate limits
+        float yawDelta = Mathf.Clamp(desiredYawDelta, -maxTurnSpeed * tickInterval, maxTurnSpeed * tickInterval);
+        float pitchDelta = Mathf.Clamp(desiredPitchDelta, -maxTurnSpeed * tickInterval, maxTurnSpeed * tickInterval);
+
+        // Apply rotation
+        clientCurrentYaw += yawDelta;
+        clientCurrentPitch += pitchDelta;
+
+        // Clamp rotations
+        clientCurrentYaw = Mathf.Repeat(clientCurrentYaw, 360f);
+        clientCurrentPitch = Mathf.Clamp(clientCurrentPitch, pitchMin, pitchMax);
+
+        // Apply locally
+        upperBody.localRotation = Quaternion.Euler(clientCurrentPitch, 0f, 0f);
+        transform.rotation = Quaternion.Euler(0f, clientCurrentYaw, 0f);
+
+
+        ulong currentTick = inputCommand.tick;
+
+        SendRotationToServerRpc(inputCommand.mouseInput, clientCurrentPitch, clientCurrentYaw, currentTick);
+
+    }
+
+    [ServerRpc]
+    private void SendRotationToServerRpc(Vector2 clientInput, float clientPitch, float clientYaw, ulong clientTick)
+    {
+        // Apply rotation on server
+        // Calculate desired rotation changes
+        float tickInterval = NetworkTimer.Singleton.GetTickInterval();
+
+        float desiredYawDelta = clientInput.x * mouseSensitivity * maxTurnSpeed * tickInterval;
+        float desiredPitchDelta = clientInput.y * mouseSensitivity * maxTurnSpeed * tickInterval;
+
+        // Apply HARD turn rate limits
+        float yawDelta = Mathf.Clamp(desiredYawDelta, -maxTurnSpeed * tickInterval, maxTurnSpeed * tickInterval);
+        float pitchDelta = Mathf.Clamp(desiredPitchDelta, -maxTurnSpeed * tickInterval, maxTurnSpeed * tickInterval);
+
+        // Apply rotation
+        serverCurrentYaw += yawDelta;
+        serverCurrentPitch += pitchDelta;
+
+        // Clamp rotations
+        serverCurrentYaw = Mathf.Repeat(serverCurrentYaw, 360f);
+        serverCurrentPitch = Mathf.Clamp(serverCurrentPitch, pitchMin, pitchMax);
+
+        // Apply rotation
+        upperBody.localRotation = Quaternion.Euler(serverCurrentPitch, 0f, 0f);
+        transform.rotation = Quaternion.Euler(0f, serverCurrentYaw, 0f);
+
+        // check for reconcilation
+        bool NeedToReconcile = Mathf.Abs(clientPitch - serverCurrentPitch) > rotationReconcileThreshold || Mathf.Abs(Mathf.DeltaAngle(clientYaw, serverCurrentYaw)) > rotationReconcileThreshold;
+
+        if (NeedToReconcile)
+        {
+            ulong correctedTick = clientTick;
+            SendReconcileRequestToClientRpc(serverCurrentPitch, serverCurrentYaw, correctedTick);
+        }
+ 
+        // send rotation to other clients
+        BroadcastRotationClientRpc(serverCurrentPitch, serverCurrentYaw);
     }
 
 
     [ClientRpc]
-    private void ReconcileClientRpc(float correctedX, float correctedY, ulong correctedTick)
+    private void SendReconcileRequestToClientRpc(float correctedPitch, float correctedYaw, ulong correctedTick)
     {
-        if (!IsOwner) return;
+        if (!IsOwner) return; // only localplayer can correct prediction
 
-        // Snap (could lerp?) to server rotation
-        xRotation = correctedX;
-        yRotation = correctedY;
+        // snap to the corrected rotation
+        // todo interpolate rotation instead of snapping it
+        clientCurrentPitch = correctedPitch;
+        clientCurrentYaw = correctedYaw;
 
-        // how does the block below work exactly?
-        // Reapply buffered inputs from correctedTick to now
+        // Replay inputs that happened after the corrected tick
         ulong currentTick = NetworkTimer.Singleton.CurrentTick.Value;
+
         for (ulong t = correctedTick + 1; t <= currentTick; t++)
         {
-            MouseCommand cmd = mouseInputBuffer[t % MouseInputBufferSize];
-            if (cmd.tick == t)
+            InputHandler.InputCommand inputCommand = inputHandler.GetInputBuffer()[t % InputHandler.BUFFER_SIZE];
+
+            if (inputCommand.tick == t) // make sure tick is valid 
             {
-                HandlePlayerRotation(cmd.input.x, cmd.input.y);
+                HandleLocalRotation(inputCommand);
             }
         }
     }
 
-
     [ClientRpc]
-    private void BroadcastRotationClientRpc(float pitch, float yaw)
+    private void BroadcastRotationClientRpc(float serverPitch, float serverYaw)
     {
-        if (IsOwner) return;
+        if (IsOwner) return; // ignore localplayer
 
-        // Setup interpolation
-        fromYaw = transform.rotation;
-        toYaw = Quaternion.Euler(0f, yaw, 0f);
-
-        fromPitch = upperBody.localRotation;
-        toPitch = Quaternion.Euler(pitch, 0f, 0f);
-
-        interpTimer = 0f;
-        interpDuration = NetworkTimer.Singleton.GetTickInterval() * 2f; // 2-tick delay ????? how is this in the past?
+        upperBody.localRotation = Quaternion.Euler(serverPitch, 0f, 0f);
+        transform.rotation = Quaternion.Euler(0f, serverYaw, 0f);
     }
 }

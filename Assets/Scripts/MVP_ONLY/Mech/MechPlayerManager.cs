@@ -18,7 +18,7 @@ public class MechPlayerManager : NetworkBehaviour
         playerCamera.enabled = true;
         playerCockpitCamera.enabled = true;
 
-        playerCamera.cullingMask = ~LayerMask.GetMask("CockpitView", "SpawnPoint Mask");
+        playerCamera.cullingMask = ~LayerMask.GetMask("CockpitView", "SpawnPoint Mask", "PlayerBody");
         playerCockpitCamera.cullingMask = LayerMask.GetMask("CockpitView");
     }
 

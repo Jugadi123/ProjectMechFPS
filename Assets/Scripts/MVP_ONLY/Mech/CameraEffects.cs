@@ -3,15 +3,12 @@ using UnityEngine;
 using Unity.Netcode;
 public class CameraEffects : NetworkBehaviour
 {
-    [SerializeField] Camera playerCamera; // Player's main camera. NOT cockpit camera. That camera is only for the ui and cockpit layer.
+    [SerializeField] Camera playerCamera; 
     [SerializeField] Camera playerCockpitCamera;
-
     [SerializeField] GameObject playerCockpitMesh;
 
     private Transform primaryWeapon; // get dynamically
     private Transform secondaryWeapon; // get dynamically
-
-    private HandleMovement movementInput;
 
     public bool allowRotate = true;
 
@@ -24,9 +21,11 @@ public class CameraEffects : NetworkBehaviour
     private float verticalVelocity;
     private bool sprintButton;
 
+    private HandleMovement movementHandler;
+
     public override void OnNetworkSpawn()
     {
-        movementInput = GetComponent<HandleMovement>();
+        movementHandler = GetComponent<HandleMovement>();
         InitializeDefaults();
         SetupWeapons();
     }
@@ -48,7 +47,7 @@ public class CameraEffects : NetworkBehaviour
 
     Vector3 GetLeanRotation(float leanAmount) {
         // get move direction
-        Vector3 moveDir = movementInput.horizontalMoveDirection;
+        Vector3 moveDir = movementHandler.wishDir;
 
         // convert it to local space
         Vector3 localMoveDir = transform.InverseTransformDirection(moveDir);
@@ -64,9 +63,9 @@ public class CameraEffects : NetworkBehaviour
 
     private void HandleLandingShake()
     {
-        if (!movementInput.IsOnGround)
+        if (!movementHandler.IsOnGround)
         {
-            verticalVelocity = movementInput.currentPlayerVelocity.y;
+            verticalVelocity = movementHandler.currentVelocity.y;
             return;
         }
 
@@ -84,28 +83,19 @@ public class CameraEffects : NetworkBehaviour
 
     private void HandleThrustingEffects()
     {
-        if (!movementInput.IsThrusting) return;
+        if (movementHandler.allowJump) return;
 
-        float pingPongTimer = Mathf.PingPong(Time.deltaTime * 5f, 1);
-        Quaternion camTarget = Quaternion.Euler(
-            defaultRotation.x,
-            defaultRotation.y + Random.Range(-5f, 5f),
-            defaultRotation.z
-        );
-        playerCamera.transform.localRotation = Quaternion.Slerp(playerCamera.transform.localRotation, camTarget, pingPongTimer);
+        Vector3 fromCockpit = defaultRotation;
+        // downward cockpit rotation
+        // Vector3 cockpitTarget = new Vector3(defaultRotation.x + 6f, defaultRotation.y, defaultRotation.z);
 
-        Quaternion cockpitTarget = Quaternion.Euler(
-            defaultRotation.x + 10f,
-            defaultRotation.y,
-            defaultRotation.z
-        );
-        playerCockpitCamera.transform.localRotation = Quaternion.Slerp(playerCockpitCamera.transform.localRotation, cockpitTarget, Time.deltaTime);
+        // StartCoroutine(RotateTransform(fromCockpit, cockpitTarget, 1f, playerCockpitMesh.transform));
     }
 
 
     private void HandleWalkingBobbing()
     {
-        if (movementInput.IsOnGround && movementInput.IsMovingHorizontally && !movementInput.IsDashing && !sprintButton)
+        if (movementHandler.IsOnGround && movementHandler.WantsToMove && !movementHandler.isDashing && !sprintButton)
         {
             bobTimer += Time.deltaTime * bobSpeed;
             float bobOffset = Mathf.Sin(bobTimer) * bobAmount;
@@ -126,7 +116,7 @@ public class CameraEffects : NetworkBehaviour
 
     private void HandleSprintLeaning()
     {
-        if (!sprintButton || movementInput.IsDashing) return;
+        if (!sprintButton || movementHandler.isDashing) return;
 
         Vector3 targetAngles = GetLeanRotation(2f);
         playerCamera.transform.localRotation = Quaternion.Lerp(playerCamera.transform.localRotation, Quaternion.Euler(targetAngles), Time.deltaTime * 5f);
@@ -142,7 +132,9 @@ public class CameraEffects : NetworkBehaviour
 
     private void HandleDashLean()
     {
-        if (movementInput.IsDashing)
+        // todo needs to be fixed. 
+        // * Only tilt on diagonal dashes. Rotate on vertical and horizontal dashes.
+        if (movementHandler.isDashing)
         {
             if (!allowRotate) return;
             allowRotate = false;

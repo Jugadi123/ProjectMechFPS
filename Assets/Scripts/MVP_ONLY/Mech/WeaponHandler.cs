@@ -270,6 +270,8 @@ public class WeaponHandler : NetworkBehaviour
                 // get the id of the enemy player
                 ulong enemyPlayerId = enemyPlayer.OwnerClientId;
 
+                if (enemyPlayerId == localClientId) return; // don't damage yourself
+
                 // take damage
                 enemyPlayer.GetComponent<HandleHealth>().TakeDamage(weaponData.damage, localClientId);
 
