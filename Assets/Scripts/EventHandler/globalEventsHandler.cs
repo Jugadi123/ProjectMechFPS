@@ -1,6 +1,7 @@
 // a script to manage all global events that can be used by any script in the game at any time
 // will be handling game state too
 
+
 using UnityEngine;
 public class globalEventsHandler : MonoBehaviour {
 
@@ -18,6 +19,8 @@ public class globalEventsHandler : MonoBehaviour {
         instance = this;
         DontDestroyOnLoad(gameObject);
     }
+
+
 
     // All global game events mainly for state management
     public System.Action EVENT_GAME_LAUNCHED;

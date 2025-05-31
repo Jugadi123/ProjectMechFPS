@@ -3,25 +3,23 @@
 --- !u!78 &1
 TagManager:
   serializedVersion: 3
-  tags:
-  - Wall
-  - Missile Projectile
+  tags: []
   layers:
   - Default
   - TransparentFX
   - Ignore Raycast
-  - lby
+  - Client_Projectile
   - Water
   - UI
-  - Localplayer Mask
-  - SpawnPoint Mask
+  - LocalPlayer
+  - SpawnPoint
   - Mech Weapons
-  - Cockpit
-  - Wall
+  - CockpitView
+  - RemotePlayer
   - Map
   - Projectiles&Bullets
-  - 
-  - 
+  - Server_Projectile
+  - PlayerBody
   - 
   - 
   - 

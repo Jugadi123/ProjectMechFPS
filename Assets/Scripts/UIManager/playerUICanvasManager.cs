@@ -1,15 +1,16 @@
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
-public class playerUICanvasManager : MonoBehaviour {
+using Unity.Netcode;
+public class playerUICanvasManager : NetworkBehaviour {
 
 
     [SerializeField] Camera mainCamera;
 
-    private handle_movement handle_Movement;
-    private handleWeapons handleWeapons;
+    public PlayerNetvars playerNetvars;
+
+    private WeaponHandler weaponHandler;
     private Transform healthBarContainer;
-    private RectTransform healthBarContainerRect;
     private Transform healthBarBar;
     private RectTransform healthBarRect;
     private float healthBarRectMaxWidth;
@@ -17,10 +18,6 @@ public class playerUICanvasManager : MonoBehaviour {
     private Color colorBasedOnHealth;
 
     private Transform criticalHealthText;
-
-    private Transform crosshairContainer;
-    private RectTransform crosshairContainerRect;
-    private Transform crosshairCenterDot;
 
     private float heatBarRectMaxHeight;
     private Transform weaponHeatContainer;
@@ -37,36 +34,26 @@ public class playerUICanvasManager : MonoBehaviour {
 
     private Color defaultHeatColor;
 
-
-
     private float maxHealth = 100f;
-
-    private bool isAlive;
     private float visualHealth;
-    public float health;
+    // actual networked health
+    public float realHealth;
 
-    public float crosshairHeight;        
-    public float crosshairWidth;            
-    public float crosshairGap;
+    private HandleMovement handleMovement;
+    [SerializeField] private Transform movementDebugText;
 
-    private Vector2 defaultCrosshairContainerSize;
-    private Vector2 maxCrosshairContainerSize = new Vector2(145, 115);
+    public override void OnNetworkSpawn()
+    {
+        if (!IsOwner) return;
 
-    // private UIManager mainMenuManager;
+        Cursor.lockState = CursorLockMode.Locked;
 
-    // public bool IsMenuOpen = false;
-    // private bool MenuOpened = false;
-    // private bool MenuClosed = false;
-
-    void Start()
-    {   
+        playerNetvars = GetComponentInParent<PlayerNetvars>();
 
         visualHealth = 100f;
-        health = 100f;
-        isAlive = true;
+        realHealth = playerNetvars.health.Value;
 
         healthBarContainer = transform.GetChild(0);
-        healthBarContainerRect = healthBarContainer.GetComponent<RectTransform>();
 
         healthBarBar = healthBarContainer.GetChild(0);
         healthBarRect = healthBarBar.GetComponent<RectTransform>();
@@ -75,11 +62,6 @@ public class playerUICanvasManager : MonoBehaviour {
 
         criticalHealthText = transform.GetChild(1);
         criticalHealthText.gameObject.SetActive(false);
-
-        crosshairContainer = transform.GetChild(2);
-        crosshairCenterDot = crosshairContainer.GetChild(8);
-        crosshairContainerRect = crosshairContainer.GetComponent<RectTransform>();
-        defaultCrosshairContainerSize = crosshairContainerRect.sizeDelta;
 
         weaponHeatContainer = transform.GetChild(3);
 
@@ -95,21 +77,22 @@ public class playerUICanvasManager : MonoBehaviour {
         heatBarRectMaxHeight = secondaryHeatBar.GetComponent<RectTransform>().sizeDelta.y;
         defaultHeatColor = secondaryHeatBar.GetComponent<Image>().color;
 
+        weaponHandler = GetComponentInParent<WeaponHandler>();
 
-        // mainMenuManager = UIManager.instance;
-        handle_Movement = GetComponentInParent<handle_movement>();
-        handleWeapons = GetComponentInParent<handleWeapons>();
 
+        handleMovement = GetComponentInParent<HandleMovement>();
     }
 
 
     void DisplayHeatUI() {
         // heat related vars
-        float maxHeat = handleWeapons.maxHeat;
-        float primaryCurrentHeat = handleWeapons.primaryCurrentHeat;
-        float secondaryCurrentHeat = handleWeapons.secondaryCurrentHeat;
-        bool primaryOverheated = handleWeapons.PrimaryOverheated;
-        bool secondaryOverheated = handleWeapons.SecondaryOverheated;
+        float maxHeat = 100f;
+        float primaryCurrentHeat = weaponHandler.primaryCurrentHeat;
+        float secondaryCurrentHeat = weaponHandler.secondaryCurrentHeat;
+        bool primaryOverheated = weaponHandler.IsPrimaryOverheated;
+        bool secondaryOverheated = weaponHandler.IsSecondaryOverheated;
+
+        // for later use
         // float primaryHeatCoolDown = handleWeapons.primaryHeatCoolDown;
         // float secondaryHeatCoolDown = handleWeapons.secondaryHeatCoolDown;
 
@@ -159,54 +142,12 @@ public class playerUICanvasManager : MonoBehaviour {
             secondaryHeatStatusText.color = Color.Lerp(secondaryHeatStatusText.color, Color.white, Time.deltaTime * 3f);
             secondaryHeatBar.GetComponent<Image>().color = defaultHeatColor;
         }
-
-
     }
 
-    Vector2 AdjustCrosshairSpread(float currentSpread) {
-        Vector2 newCrosshairSize = defaultCrosshairContainerSize + (maxCrosshairContainerSize - defaultCrosshairContainerSize) * (currentSpread / handleWeapons.maxSpread);
-        return newCrosshairSize;
-    }
-
-    void Update()
+    private void DisplayHealthUI()
     {
-        // if (Input.GetKeyDown(KeyCode.Escape)) {
-        //     IsMenuOpen = !IsMenuOpen;
-        // }
+        visualHealth = Mathf.Lerp(visualHealth, realHealth, Time.deltaTime * 10f);
 
-        // if (IsMenuOpen) {
-        //     Cursor.lockState = CursorLockMode.None;
-
-        //     if (!MenuOpened) {
-        //         Debug.Log("Menu just opened!");
-        //         // always open the main menu first
-        //         mainMenuManager.currentPanelIndex = 0; 
-        //         mainMenuManager.ShowUpdatedPanel();
-        //         MenuOpened = true;
-        //     }
-        //     MenuClosed = false;
-        //     return;
-        // }
-        // else {
-
-        //     if (!MenuClosed) {
-        //         mainMenuManager.HideMainMenu();
-        //         MenuClosed = true;
-        //         Debug.Log("Menu just closed");
-        //     }
-
-        //     MenuOpened = false;
-        //     Cursor.lockState = CursorLockMode.Locked;
-        // }
-        
-        // if (Input.GetKeyDown(KeyCode.V)) {
-        //     Takedamage(10);
-        // }
-
-        visualHealth = Mathf.Lerp(visualHealth, health, Time.deltaTime * 10f);
-
-        Cursor.lockState = CursorLockMode.Locked;
-        
         // using old health for lerping changes to health (visual aspect)
         float healthPercentage = visualHealth / maxHealth;
 
@@ -229,14 +170,15 @@ public class playerUICanvasManager : MonoBehaviour {
         
         healthBarBar.GetComponent<Image>().color = Color.Lerp(healthBarBar.GetComponent<Image>().color, colorBasedOnHealth, Time.deltaTime * 3f);
 
-        // based on current weapon's spread
+    }
 
-        crosshairContainerRect.sizeDelta = AdjustCrosshairSpread(handleWeapons.currentWeaponSpread);
+    void Update()
+    {
+        if (!IsOwner) return;
 
-
-
-
+        realHealth = playerNetvars.health.Value;
+        DisplayHealthUI();
         DisplayHeatUI();
-
+        movementDebugText.GetComponent<TextMeshProUGUI>().text = "Velocity: " + handleMovement.currentVelocity.ToString() + " | Speed: " + Mathf.Floor(handleMovement.currentVelocity.magnitude);
     }
 }

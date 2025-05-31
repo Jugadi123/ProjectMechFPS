@@ -7,6 +7,6 @@ using UnityEngine;
 public class ScriptableLoadout : ScriptableObject {
     public int id;
     public string loadoutName;
-    public ScriptableWeapon primaryWeapon;
-    public ScriptableWeapon secondaryWeapon;
+    // public ScriptableWeapon primaryWeapon;
+    // public ScriptableWeapon secondaryWeapon;
 }
