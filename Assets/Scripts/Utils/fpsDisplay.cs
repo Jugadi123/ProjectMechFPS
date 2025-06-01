@@ -7,9 +7,17 @@ public class fpsDisplay : NetworkBehaviour
 
     [SerializeField] private TextMeshProUGUI fpsText;
 
+    private int FPS = 60;
+
     private void Awake()
     {
         fpsText = GetComponent<TextMeshProUGUI>();
+    }
+
+
+    private void Start()
+    {
+        Application.targetFrameRate = FPS;
     }
 
     // Update is called once per frame

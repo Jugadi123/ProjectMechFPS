@@ -1,5 +1,7 @@
 using UnityEngine;
 using Unity.Netcode;
+using Unity.Mathematics;
+using System.Data.Common;
 
 public class HandleMovement : NetworkBehaviour
 {
@@ -8,6 +10,7 @@ public class HandleMovement : NetworkBehaviour
     [SerializeField] private GameObject velocityLinePrefab;
     [SerializeField] private GameObject rotationLinePrefab;
     [SerializeField] private Transform lowerBody;
+    [SerializeField] private Camera mainCamera;
 
     private CharacterController characterController;
     private PlayerNetvars playerNetvars;
@@ -42,13 +45,26 @@ public class HandleMovement : NetworkBehaviour
     [SerializeField] private float wallGrabDeceleration = 8f; // How quickly the mech slows down when grabbing wall
     [SerializeField] private float defaultWallJumpBoost = 12f; // Initial boost when jumping off wall
 
+    private ulong wallGrabTick = 0;
+    private const int WallGrabDelayTicks = 5;
+
+
+    // Wall jump camera effects
+    // A saved angle that changes based on which side we wall jump and rotate accordingly for camera effects
+    public Vector3 cameraBaseAngle;
+    public float cameraRotateZAngle;
+    public bool rotateCameraZ;
 
     private void Awake()
     {
         characterController = GetComponent<CharacterController>();
         playerNetvars = GetComponent<PlayerNetvars>();
         inputHandler = GetComponent<InputHandler>();
+
+        cameraBaseAngle = mainCamera.transform.localRotation.eulerAngles;
     }
+
+    
 
 
     public void ApplyMovement(InputHandler.InputCommand inputCommand)
@@ -66,6 +82,8 @@ public class HandleMovement : NetworkBehaviour
         if (IsOnGround)
         {
             isWallSliding = false;
+            canWallJump = false;
+            rotateCameraZ = false;
         }
 
         bool dashHeld = Input.GetKey(KeyCode.C); // DASH KEY (C)
@@ -79,19 +97,22 @@ public class HandleMovement : NetworkBehaviour
 
         bool jumpHeld = currentInputCommand.jump;
 
-        // Wall jump logic
-        if (jumpHeld && isWallSliding && canWallJump)
+        bool isWallJumpTick = NetworkTimer.Singleton.CurrentTick.Value >= wallGrabTick;
+
+        if (jumpHeld && isWallSliding && canWallJump && isWallJumpTick && !IsOnGround)
         {
             WallJump();
         }
         // Normal jump logic
         else if (jumpHeld && IsOnGround)
         {
-            if (allowJump)
-            {
-                IsJumping = true;
-                allowJump = false;
-            }
+            IsJumping = true;
+
+            // if (allowJump)
+            // {
+            //     IsJumping = true;
+            //     allowJump = false;
+            // }
         }
         else if (IsOnGround)
         {
@@ -112,9 +133,7 @@ public class HandleMovement : NetworkBehaviour
             RunAirborneLogic();
         }
 
-
         characterController.Move(currentVelocity * TICK_INTERVAL);
-
 
         if (!isWallSliding && !canWallJump)
         {
@@ -137,6 +156,9 @@ public class HandleMovement : NetworkBehaviour
 
     private void RunWallSlideLogic()
     {
+        // rotate camera towards wall
+        rotateCameraZ = true;
+
         // Reduce momentum gently (simulate sliding drag) after momentum window is gone
         currentVelocity = Vector3.Lerp(currentVelocity, Vector3.zero, wallGrabDeceleration * TICK_INTERVAL);
 
@@ -144,6 +166,7 @@ public class HandleMovement : NetworkBehaviour
         {
             currentVelocity = Vector3.zero;
             isWallSliding = false;
+            rotateCameraZ = false;
         }
 
         canWallJump = true; // can jump off the wall if player doesn't wanna fully stop and hang on the wall
@@ -152,6 +175,9 @@ public class HandleMovement : NetworkBehaviour
 
     private void WallJump()
     {
+
+        if (!canWallJump) return;
+
         // Preserve existing momentum when jumping off quickly
         float preservedSpeed = currentHorizontalSpeed;
 
@@ -191,6 +217,7 @@ public class HandleMovement : NetworkBehaviour
             // reset state
             isWallSliding = false;
             canWallJump = false;
+            rotateCameraZ = false;
 
             // get final jump velocity
             jumpVelocity = new Vector3(jumpDir.x, 0f, jumpDir.z) * jumpSpeed;
@@ -218,7 +245,7 @@ public class HandleMovement : NetworkBehaviour
 
         if (IsJumping)
         {
-            float jumpChainCapSpeed = 20f; // max allowed speed if we jump with the exception of our current momentum being greater than this value
+            float jumpChainCapSpeed = 10f; // max allowed speed if we jump with the exception of our current momentum being greater than this value
             float allowedSpeed = currentHorizontalSpeed; // default speed is current speed (no change in velocity)
             Vector3 jumpDir = WantsToMove ? wishDir.normalized : horizontalVelocity.normalized; // default direction is current velocity if no input is detected. Otherwise use the wish dir
 
@@ -246,18 +273,14 @@ public class HandleMovement : NetworkBehaviour
 
     private void RunAirborneLogic()
     {
-        if (isDashing)
-        {
-            return;
-        }
+        if (isDashing) return;
 
-        // Apply gravity
         currentVelocity.y += playerNetvars.gravity.Value * TICK_INTERVAL * 3f;
 
         // Get current horizontal velocity
         Vector3 currentHorizontalVel = new Vector3(currentVelocity.x, 0, currentVelocity.z);
-        float currentSpeed = currentHorizontalVel.magnitude;
-
+        float currentSpeed = Mathf.Min(currentHorizontalVel.magnitude, playerNetvars.maxAirSpeed.Value);
+        
         if (currentSpeed > 1f)
         {
             if (WantsToMove)
@@ -361,10 +384,26 @@ public class HandleMovement : NetworkBehaviour
         line.enabled = render;
     }
 
+
+    private void RunWallJumpCameraEffects(bool canRotate, float targetZRotation)
+    {
+        // Default rotation is the base camera rotation
+        Vector3 target = cameraBaseAngle;
+
+        // apply Z rotation
+        if (canRotate)
+        {
+            target = new(cameraBaseAngle.x, cameraBaseAngle.y, targetZRotation);
+        }
+
+        mainCamera.transform.localRotation = Quaternion.Lerp(mainCamera.transform.localRotation, Quaternion.Euler(target), Time.deltaTime * 2f);
+    }
+
     private void Update()
     {
         if (!IsOwner) return;
         currentInputCommand = inputHandler.GetCurrentInputCommand();
+        RunWallJumpCameraEffects(rotateCameraZ, cameraRotateZAngle);
     }
 
 
@@ -386,26 +425,25 @@ public class HandleMovement : NetworkBehaviour
     }
 
 
-    [SerializeField] private float wallCheckDistance = 1.2f;
+    [SerializeField] private float wallCheckDistance = 1.5f;
     [SerializeField] private LayerMask wallLayer;
 
 
     // wall detection
+
+
+    private bool canSaveWallGrabTick = true;
     private void DetectWalls()
     {
-        Debug.DrawRay(transform.position, Quaternion.Euler(0, 45f, 0) * (-transform.right * 1f), Color.blue);
-        Debug.DrawRay(transform.position, Quaternion.Euler(0, -45f, 0) * (transform.right * 1f), Color.blue);
+        Debug.DrawRay(transform.position, Quaternion.Euler(0, 35f, 0) * -transform.right * wallCheckDistance, Color.blue);
+        Debug.DrawRay(transform.position, Quaternion.Euler(0, -35f, 0) * transform.right * wallCheckDistance, Color.blue);
+        Debug.DrawRay(transform.position, wishDir * 1f, Color.green);
 
-
-
-        if (IsOnGround)
-        {
-            return;
-        }
+        if (IsOnGround) return;
 
         Vector3 origin = transform.position;
-        Vector3 left = Quaternion.Euler(0, -45f, 0) * transform.right;
-        Vector3 right = Quaternion.Euler(0, 45f, 0) * -transform.right;
+        Vector3 left = Quaternion.Euler(0, -35f, 0) * transform.right;
+        Vector3 right = Quaternion.Euler(0, 35f, 0) * -transform.right;
 
         RaycastHit hitLeft;
         RaycastHit hitRight;
@@ -415,27 +453,40 @@ public class HandleMovement : NetworkBehaviour
 
         if (wallOnLeft || wallOnRight)
         {
+            cameraRotateZAngle = wallOnLeft ? -60f : 60f;
+
             Vector3 normal = wallOnLeft ? hitLeft.normal : hitRight.normal; // get appropriate wall normal
 
-            float approachAngleWishdir = Vector3.Angle(-wallNormal, wishDir.normalized);
-            float approachAngleVelocity = Vector3.Angle(-wallNormal, horizontalVelocity.normalized);
+            float angleToWallFromWishDir = Mathf.Abs(Vector3.SignedAngle(wishDir.normalized, normal, Vector3.up));
+            float angleToWallFromVelocity = Mathf.Abs(Vector3.SignedAngle(horizontalVelocity.normalized, normal, Vector3.up));
 
-            if (approachAngleWishdir < 100f || approachAngleVelocity < 100f)
+            bool validApproach = angleToWallFromWishDir > 90f || angleToWallFromVelocity > 90f;
+
+            if (validApproach)
             {
-                // trigger wall jump state
                 wallNormal = normal;
                 isWallSliding = true;
+
+                if (canSaveWallGrabTick)
+                {
+                    wallGrabTick = NetworkTimer.Singleton.CurrentTick.Value + WallGrabDelayTicks;
+                    canSaveWallGrabTick = false;
+                }
             }
             else
             {
                 isWallSliding = false;
                 canWallJump = false;
+                rotateCameraZ = false;
+                canSaveWallGrabTick = true;
             }
         }
         else
         {
             isWallSliding = false;
             canWallJump = false;
+            rotateCameraZ = false;
+            canSaveWallGrabTick = true;
         }
     }
 }

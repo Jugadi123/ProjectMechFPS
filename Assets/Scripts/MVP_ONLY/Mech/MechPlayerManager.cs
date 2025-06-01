@@ -18,8 +18,8 @@ public class MechPlayerManager : NetworkBehaviour
         playerCamera.enabled = true;
         playerCockpitCamera.enabled = true;
 
-        playerCamera.cullingMask = ~LayerMask.GetMask("CockpitView", "SpawnPoint Mask", "PlayerBody");
-        playerCockpitCamera.cullingMask = LayerMask.GetMask("CockpitView");
+        playerCamera.cullingMask = ~LayerMask.GetMask("CockpitView", "Mech Weapons", "SpawnPoint Mask", "PlayerBody");
+        playerCockpitCamera.cullingMask = LayerMask.GetMask("CockpitView", "Mech Weapons");
     }
 
     private void DisableRemoteView()

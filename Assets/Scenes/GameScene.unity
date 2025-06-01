@@ -2199,10 +2199,10 @@ MonoBehaviour:
   m_GameObject: {fileID: 17946780}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 71d3bc55b3251485586b909814a30f9f, type: 3}
+  m_Script: {fileID: 11500000, guid: b6f777af8ac85d4439fba5898b37ecaa, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  decalId: Stairs_2
+  decalId: 
 --- !u!43 &49067332
 Mesh:
   m_ObjectHideFlags: 0
@@ -2730,10 +2730,10 @@ MonoBehaviour:
   m_GameObject: {fileID: 64215782}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 71d3bc55b3251485586b909814a30f9f, type: 3}
+  m_Script: {fileID: 11500000, guid: b6f777af8ac85d4439fba5898b37ecaa, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  decalId: Block_13
+  decalId: 
 --- !u!1 &156183324
 GameObject:
   m_ObjectHideFlags: 0
@@ -3175,10 +3175,10 @@ MonoBehaviour:
   m_GameObject: {fileID: 161895991}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 71d3bc55b3251485586b909814a30f9f, type: 3}
+  m_Script: {fileID: 11500000, guid: b6f777af8ac85d4439fba5898b37ecaa, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  decalId: Wall_6
+  decalId: 
 --- !u!43 &181319244
 Mesh:
   m_ObjectHideFlags: 0
@@ -3706,10 +3706,10 @@ MonoBehaviour:
   m_GameObject: {fileID: 206260561}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 71d3bc55b3251485586b909814a30f9f, type: 3}
+  m_Script: {fileID: 11500000, guid: b6f777af8ac85d4439fba5898b37ecaa, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  decalId: Block_1
+  decalId: 
 --- !u!43 &214614485
 Mesh:
   m_ObjectHideFlags: 0
@@ -8257,10 +8257,10 @@ MonoBehaviour:
   m_GameObject: {fileID: 262008439}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 71d3bc55b3251485586b909814a30f9f, type: 3}
+  m_Script: {fileID: 11500000, guid: b6f777af8ac85d4439fba5898b37ecaa, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  decalId: Piller_6
+  decalId: 
 --- !u!43 &271778454
 Mesh:
   m_ObjectHideFlags: 0
@@ -8788,10 +8788,10 @@ MonoBehaviour:
   m_GameObject: {fileID: 291237514}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 71d3bc55b3251485586b909814a30f9f, type: 3}
+  m_Script: {fileID: 11500000, guid: b6f777af8ac85d4439fba5898b37ecaa, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  decalId: Wall_5
+  decalId: 
 --- !u!43 &319331460
 Mesh:
   m_ObjectHideFlags: 0
@@ -9319,10 +9319,10 @@ MonoBehaviour:
   m_GameObject: {fileID: 328692869}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 71d3bc55b3251485586b909814a30f9f, type: 3}
+  m_Script: {fileID: 11500000, guid: b6f777af8ac85d4439fba5898b37ecaa, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  decalId: Block_4
+  decalId: 
 --- !u!1 &358581126
 GameObject:
   m_ObjectHideFlags: 0
@@ -9685,10 +9685,10 @@ MonoBehaviour:
   m_GameObject: {fileID: 358581126}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 71d3bc55b3251485586b909814a30f9f, type: 3}
+  m_Script: {fileID: 11500000, guid: b6f777af8ac85d4439fba5898b37ecaa, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  decalId: Wall_7
+  decalId: 
 --- !u!1001 &372926714
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -11171,10 +11171,10 @@ MonoBehaviour:
   m_GameObject: {fileID: 492230865}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 71d3bc55b3251485586b909814a30f9f, type: 3}
+  m_Script: {fileID: 11500000, guid: b6f777af8ac85d4439fba5898b37ecaa, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  decalId: Wall_10
+  decalId: 
 --- !u!1 &497982257
 GameObject:
   m_ObjectHideFlags: 0
@@ -11537,10 +11537,10 @@ MonoBehaviour:
   m_GameObject: {fileID: 497982257}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 71d3bc55b3251485586b909814a30f9f, type: 3}
+  m_Script: {fileID: 11500000, guid: b6f777af8ac85d4439fba5898b37ecaa, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  decalId: Wall_4
+  decalId: 
 --- !u!1 &506567252
 GameObject:
   m_ObjectHideFlags: 0
@@ -15786,10 +15786,10 @@ MonoBehaviour:
   m_GameObject: {fileID: 506567252}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 71d3bc55b3251485586b909814a30f9f, type: 3}
+  m_Script: {fileID: 11500000, guid: b6f777af8ac85d4439fba5898b37ecaa, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  decalId: Piller_8
+  decalId: 
 --- !u!1001 &535651436
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -16217,10 +16217,10 @@ MonoBehaviour:
   m_GameObject: {fileID: 569809410}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 71d3bc55b3251485586b909814a30f9f, type: 3}
+  m_Script: {fileID: 11500000, guid: b6f777af8ac85d4439fba5898b37ecaa, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  decalId: Wall_9
+  decalId: 
 --- !u!43 &572503729
 Mesh:
   m_ObjectHideFlags: 0
@@ -16913,10 +16913,10 @@ MonoBehaviour:
   m_GameObject: {fileID: 602393724}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 71d3bc55b3251485586b909814a30f9f, type: 3}
+  m_Script: {fileID: 11500000, guid: b6f777af8ac85d4439fba5898b37ecaa, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  decalId: Block_8
+  decalId: 
 --- !u!43 &616738054
 Mesh:
   m_ObjectHideFlags: 0
@@ -17128,10 +17128,10 @@ MonoBehaviour:
   m_GameObject: {fileID: 652140475}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 71d3bc55b3251485586b909814a30f9f, type: 3}
+  m_Script: {fileID: 11500000, guid: b6f777af8ac85d4439fba5898b37ecaa, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  decalId: Wall_7
+  decalId: 
 --- !u!64 &652140478
 MeshCollider:
   m_ObjectHideFlags: 0
@@ -18140,10 +18140,10 @@ MonoBehaviour:
   m_GameObject: {fileID: 738334543}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 71d3bc55b3251485586b909814a30f9f, type: 3}
+  m_Script: {fileID: 11500000, guid: b6f777af8ac85d4439fba5898b37ecaa, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  decalId: Block_9
+  decalId: 
 --- !u!1 &782348280
 GameObject:
   m_ObjectHideFlags: 0
@@ -24052,10 +24052,10 @@ MonoBehaviour:
   m_GameObject: {fileID: 782348280}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 71d3bc55b3251485586b909814a30f9f, type: 3}
+  m_Script: {fileID: 11500000, guid: b6f777af8ac85d4439fba5898b37ecaa, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  decalId: Stairs_1
+  decalId: 
 --- !u!1 &796878556
 GameObject:
   m_ObjectHideFlags: 0
@@ -24418,10 +24418,10 @@ MonoBehaviour:
   m_GameObject: {fileID: 796878556}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 71d3bc55b3251485586b909814a30f9f, type: 3}
+  m_Script: {fileID: 11500000, guid: b6f777af8ac85d4439fba5898b37ecaa, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  decalId: Block_5
+  decalId: 
 --- !u!43 &799082326
 Mesh:
   m_ObjectHideFlags: 0
@@ -24949,10 +24949,10 @@ MonoBehaviour:
   m_GameObject: {fileID: 832289439}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 71d3bc55b3251485586b909814a30f9f, type: 3}
+  m_Script: {fileID: 11500000, guid: b6f777af8ac85d4439fba5898b37ecaa, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  decalId: Block_11
+  decalId: 
 --- !u!43 &832647188
 Mesh:
   m_ObjectHideFlags: 0
@@ -29428,10 +29428,10 @@ MonoBehaviour:
   m_GameObject: {fileID: 847021958}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 71d3bc55b3251485586b909814a30f9f, type: 3}
+  m_Script: {fileID: 11500000, guid: b6f777af8ac85d4439fba5898b37ecaa, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  decalId: Piller_3
+  decalId: 
 --- !u!1 &865912935
 GameObject:
   m_ObjectHideFlags: 0
@@ -33677,10 +33677,10 @@ MonoBehaviour:
   m_GameObject: {fileID: 865912935}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 71d3bc55b3251485586b909814a30f9f, type: 3}
+  m_Script: {fileID: 11500000, guid: b6f777af8ac85d4439fba5898b37ecaa, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  decalId: Piller_1
+  decalId: 
 --- !u!1 &868826445
 GameObject:
   m_ObjectHideFlags: 0
@@ -37926,10 +37926,10 @@ MonoBehaviour:
   m_GameObject: {fileID: 868826445}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 71d3bc55b3251485586b909814a30f9f, type: 3}
+  m_Script: {fileID: 11500000, guid: b6f777af8ac85d4439fba5898b37ecaa, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  decalId: Piller_7
+  decalId: 
 --- !u!1 &876350774
 GameObject:
   m_ObjectHideFlags: 0
@@ -38292,10 +38292,10 @@ MonoBehaviour:
   m_GameObject: {fileID: 876350774}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 71d3bc55b3251485586b909814a30f9f, type: 3}
+  m_Script: {fileID: 11500000, guid: b6f777af8ac85d4439fba5898b37ecaa, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  decalId: Wall_11
+  decalId: 
 --- !u!43 &920492941
 Mesh:
   m_ObjectHideFlags: 0
@@ -38823,10 +38823,10 @@ MonoBehaviour:
   m_GameObject: {fileID: 921053880}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 71d3bc55b3251485586b909814a30f9f, type: 3}
+  m_Script: {fileID: 11500000, guid: b6f777af8ac85d4439fba5898b37ecaa, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  decalId: Block_10
+  decalId: 
 --- !u!4 &924824405 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 4821396842422985690, guid: b5ac8aac8c7a04de1a16435a19497717, type: 3}
@@ -39359,10 +39359,10 @@ MonoBehaviour:
   m_GameObject: {fileID: 992492678}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 71d3bc55b3251485586b909814a30f9f, type: 3}
+  m_Script: {fileID: 11500000, guid: b6f777af8ac85d4439fba5898b37ecaa, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  decalId: Wall_2
+  decalId: 
 --- !u!1 &1027520549
 GameObject:
   m_ObjectHideFlags: 0
@@ -43608,10 +43608,10 @@ MonoBehaviour:
   m_GameObject: {fileID: 1027520549}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 71d3bc55b3251485586b909814a30f9f, type: 3}
+  m_Script: {fileID: 11500000, guid: b6f777af8ac85d4439fba5898b37ecaa, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  decalId: Piller_0
+  decalId: 
 --- !u!1 &1038028365
 GameObject:
   m_ObjectHideFlags: 0
@@ -47936,10 +47936,10 @@ MonoBehaviour:
   m_GameObject: {fileID: 1045191738}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 71d3bc55b3251485586b909814a30f9f, type: 3}
+  m_Script: {fileID: 11500000, guid: b6f777af8ac85d4439fba5898b37ecaa, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  decalId: Piller_5
+  decalId: 
 --- !u!43 &1053497757
 Mesh:
   m_ObjectHideFlags: 0
@@ -48467,10 +48467,10 @@ MonoBehaviour:
   m_GameObject: {fileID: 1073499856}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 71d3bc55b3251485586b909814a30f9f, type: 3}
+  m_Script: {fileID: 11500000, guid: b6f777af8ac85d4439fba5898b37ecaa, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  decalId: Block_3
+  decalId: 
 --- !u!1 &1103035567
 GameObject:
   m_ObjectHideFlags: 0
@@ -48517,10 +48517,10 @@ MonoBehaviour:
   m_GameObject: {fileID: 1103035567}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 71d3bc55b3251485586b909814a30f9f, type: 3}
+  m_Script: {fileID: 11500000, guid: b6f777af8ac85d4439fba5898b37ecaa, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  decalId: Wall_7
+  decalId: 
 --- !u!64 &1103035570
 MeshCollider:
   m_ObjectHideFlags: 0
@@ -48883,10 +48883,10 @@ MonoBehaviour:
   m_GameObject: {fileID: 1122339177}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 71d3bc55b3251485586b909814a30f9f, type: 3}
+  m_Script: {fileID: 11500000, guid: b6f777af8ac85d4439fba5898b37ecaa, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  decalId: Wall_7
+  decalId: 
 --- !u!64 &1122339180
 MeshCollider:
   m_ObjectHideFlags: 0
@@ -49565,10 +49565,10 @@ MonoBehaviour:
   m_GameObject: {fileID: 1133112846}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 71d3bc55b3251485586b909814a30f9f, type: 3}
+  m_Script: {fileID: 11500000, guid: b6f777af8ac85d4439fba5898b37ecaa, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  decalId: Wall_3
+  decalId: 
 --- !u!43 &1135841428
 Mesh:
   m_ObjectHideFlags: 0
@@ -54474,10 +54474,10 @@ MonoBehaviour:
   m_GameObject: {fileID: 1245572048}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 71d3bc55b3251485586b909814a30f9f, type: 3}
+  m_Script: {fileID: 11500000, guid: b6f777af8ac85d4439fba5898b37ecaa, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  decalId: Piller_2
+  decalId: 
 --- !u!43 &1269001866
 Mesh:
   m_ObjectHideFlags: 0
@@ -55175,10 +55175,10 @@ MonoBehaviour:
   m_GameObject: {fileID: 1305855800}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 71d3bc55b3251485586b909814a30f9f, type: 3}
+  m_Script: {fileID: 11500000, guid: b6f777af8ac85d4439fba5898b37ecaa, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  decalId: Block_6
+  decalId: 
 --- !u!1 &1351752278
 GameObject:
   m_ObjectHideFlags: 0
@@ -55594,10 +55594,10 @@ MonoBehaviour:
   m_GameObject: {fileID: 1357894731}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 71d3bc55b3251485586b909814a30f9f, type: 3}
+  m_Script: {fileID: 11500000, guid: b6f777af8ac85d4439fba5898b37ecaa, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  decalId: Block_7
+  decalId: 
 --- !u!43 &1371606502
 Mesh:
   m_ObjectHideFlags: 0
@@ -56046,10 +56046,10 @@ MonoBehaviour:
   m_GameObject: {fileID: 1462490064}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 71d3bc55b3251485586b909814a30f9f, type: 3}
+  m_Script: {fileID: 11500000, guid: b6f777af8ac85d4439fba5898b37ecaa, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  decalId: Ground
+  decalId: 
 --- !u!43 &1510033504
 Mesh:
   m_ObjectHideFlags: 0
@@ -61272,10 +61272,10 @@ MonoBehaviour:
   m_GameObject: {fileID: 1547125986}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 71d3bc55b3251485586b909814a30f9f, type: 3}
+  m_Script: {fileID: 11500000, guid: b6f777af8ac85d4439fba5898b37ecaa, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  decalId: Piller_4
+  decalId: 
 --- !u!43 &1647672741
 Mesh:
   m_ObjectHideFlags: 0
@@ -63521,10 +63521,10 @@ MonoBehaviour:
   m_GameObject: {fileID: 1664270580}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 71d3bc55b3251485586b909814a30f9f, type: 3}
+  m_Script: {fileID: 11500000, guid: b6f777af8ac85d4439fba5898b37ecaa, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  decalId: Stairs_0
+  decalId: 
 --- !u!43 &1701949264
 Mesh:
   m_ObjectHideFlags: 0
@@ -64052,10 +64052,10 @@ MonoBehaviour:
   m_GameObject: {fileID: 1728256080}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 71d3bc55b3251485586b909814a30f9f, type: 3}
+  m_Script: {fileID: 11500000, guid: b6f777af8ac85d4439fba5898b37ecaa, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  decalId: Block_12
+  decalId: 
 --- !u!1 &1729716235
 GameObject:
   m_ObjectHideFlags: 0
@@ -64418,10 +64418,10 @@ MonoBehaviour:
   m_GameObject: {fileID: 1729716235}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 71d3bc55b3251485586b909814a30f9f, type: 3}
+  m_Script: {fileID: 11500000, guid: b6f777af8ac85d4439fba5898b37ecaa, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  decalId: Wall_1
+  decalId: 
 --- !u!1 &1738943654
 GameObject:
   m_ObjectHideFlags: 0
@@ -64784,10 +64784,10 @@ MonoBehaviour:
   m_GameObject: {fileID: 1738943654}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 71d3bc55b3251485586b909814a30f9f, type: 3}
+  m_Script: {fileID: 11500000, guid: b6f777af8ac85d4439fba5898b37ecaa, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  decalId: Wall_0
+  decalId: 
 --- !u!43 &1740414367
 Mesh:
   m_ObjectHideFlags: 0
@@ -65425,10 +65425,10 @@ MonoBehaviour:
   m_GameObject: {fileID: 1780124253}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 71d3bc55b3251485586b909814a30f9f, type: 3}
+  m_Script: {fileID: 11500000, guid: b6f777af8ac85d4439fba5898b37ecaa, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  decalId: Block_2
+  decalId: 
 --- !u!43 &1784428174
 Mesh:
   m_ObjectHideFlags: 0
@@ -65919,10 +65919,10 @@ MonoBehaviour:
   m_GameObject: {fileID: 1811540003}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 71d3bc55b3251485586b909814a30f9f, type: 3}
+  m_Script: {fileID: 11500000, guid: b6f777af8ac85d4439fba5898b37ecaa, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  decalId: Pyramid_1
+  decalId: 
 --- !u!43 &1836017712
 Mesh:
   m_ObjectHideFlags: 0
@@ -66945,10 +66945,10 @@ MonoBehaviour:
   m_GameObject: {fileID: 1933402234}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 71d3bc55b3251485586b909814a30f9f, type: 3}
+  m_Script: {fileID: 11500000, guid: b6f777af8ac85d4439fba5898b37ecaa, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  decalId: Block_14
+  decalId: 
 --- !u!43 &1934189862
 Mesh:
   m_ObjectHideFlags: 0
@@ -67870,10 +67870,10 @@ MonoBehaviour:
   m_GameObject: {fileID: 2056972988}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 71d3bc55b3251485586b909814a30f9f, type: 3}
+  m_Script: {fileID: 11500000, guid: b6f777af8ac85d4439fba5898b37ecaa, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  decalId: Pyramid_0
+  decalId: 
 --- !u!43 &2080717086
 Mesh:
   m_ObjectHideFlags: 0
@@ -68801,10 +68801,10 @@ MonoBehaviour:
   m_GameObject: {fileID: 2141177923}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 71d3bc55b3251485586b909814a30f9f, type: 3}
+  m_Script: {fileID: 11500000, guid: b6f777af8ac85d4439fba5898b37ecaa, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  decalId: Block_0
+  decalId: 
 --- !u!1001 &7091110624910879265
 PrefabInstance:
   m_ObjectHideFlags: 0
