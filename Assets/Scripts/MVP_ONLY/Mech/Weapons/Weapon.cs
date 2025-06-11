@@ -45,4 +45,7 @@ public class Weapon : ScriptableObject
     [Header("Grenade Projectile Settings")]
     public float firstBounchExplosionExpiryTime;
     public float timeBeforeCanManuallyExplode;
+    
+    // For things like rocket jumping
+    public float pushBackForce;
 } 

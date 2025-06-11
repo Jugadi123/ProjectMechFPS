@@ -57,5 +57,6 @@
         "Temp/": true
     },
     "dotnet.defaultSolution": "ProjectMechFPS.sln",
-    "git.ignoreLimitWarning": true
+    "git.ignoreLimitWarning": true,
+    "codium.codeCompletion.enable": true
 }

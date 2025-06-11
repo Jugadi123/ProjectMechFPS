@@ -3,6 +3,7 @@ using Unity.Netcode;
 
 public class InputHandler : MonoBehaviour
 {
+
     public struct InputCommand : INetworkSerializable
     {
         public ulong tick;
@@ -11,6 +12,9 @@ public class InputHandler : MonoBehaviour
         public bool jump;
         public bool sprint;
         public bool dash;
+        public Vector3 clientVelocity; // Add current velocity
+        public Vector3 clientPosition; // Add current position
+
         public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter
         {
             serializer.SerializeValue(ref tick);
@@ -19,6 +23,8 @@ public class InputHandler : MonoBehaviour
             serializer.SerializeValue(ref jump);
             serializer.SerializeValue(ref sprint);
             serializer.SerializeValue(ref dash);
+            serializer.SerializeValue(ref clientVelocity);
+            serializer.SerializeValue(ref clientPosition);
         }
     }
 
@@ -29,6 +35,9 @@ public class InputHandler : MonoBehaviour
     {
         // get current tick
         ulong currentTick = NetworkTimer.Singleton.CurrentTick.Value;
+    
+        // Ensure we don't overwrite unprocessed commands
+        int bufferIndex = (int)(currentTick % BUFFER_SIZE);
 
         // collect input
         // Get raw mouse input
@@ -45,17 +54,23 @@ public class InputHandler : MonoBehaviour
         bool sprintKey = Input.GetKey(KeyCode.LeftShift);
         bool dashKey = Input.GetKey(KeyCode.C);
 
-        // write to buffer and return command
-        int bufferIndex = (int)currentTick % BUFFER_SIZE;
-        return clientInputBuffer[bufferIndex] = new InputCommand
+        // Create command with current state
+        InputCommand command = new InputCommand
         {
             tick = currentTick,
             mouseInput = mouse,
             horizontalInput = horizontalInput,
             jump = jump,
             sprint = sprintKey,
-            dash = dashKey
+            dash = dashKey,
+            clientVelocity = GetComponent<HandleMovement>().currentVelocity,
+            clientPosition = transform.position
         };
+
+        // Store in buffer
+        clientInputBuffer[bufferIndex] = command;
+
+        return command;
     }
 
     public InputCommand[] GetInputBuffer()

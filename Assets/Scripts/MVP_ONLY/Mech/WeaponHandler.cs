@@ -30,7 +30,8 @@ public class WeaponHandler : NetworkBehaviour
     // Audio sources for weapon sounds
     private AudioSource primaryWeaponFireSound;
     private AudioSource secondaryWeaponFireSound;
-
+    // Hit sound effect
+  
     // Locally tracked variables for client-side prediction
     public float primaryCurrentHeat = 0f;
     public float secondaryCurrentHeat = 0f;
@@ -100,6 +101,8 @@ public class WeaponHandler : NetworkBehaviour
         public float firstBounchExplosionExpiryTime;
         public float timeBeforeCanManuallyExplode;
 
+        public float pushBackForce;
+
         public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter
         {
             serializer.SerializeValue(ref isPrimary);
@@ -114,6 +117,8 @@ public class WeaponHandler : NetworkBehaviour
             serializer.SerializeValue(ref explosionRadius);
             serializer.SerializeValue(ref firstBounchExplosionExpiryTime);
             serializer.SerializeValue(ref timeBeforeCanManuallyExplode);
+            serializer.SerializeValue(ref pushBackForce);
+
         }
 
         public static WeaponInfo FromWeapon(Weapon weapon)
@@ -131,7 +136,8 @@ public class WeaponHandler : NetworkBehaviour
                 projectileGravity = weapon.projectileGravity,
                 explosionRadius = weapon.explosionRadius,
                 firstBounchExplosionExpiryTime = weapon.firstBounchExplosionExpiryTime,
-                timeBeforeCanManuallyExplode = weapon.timeBeforeCanManuallyExplode
+                timeBeforeCanManuallyExplode = weapon.timeBeforeCanManuallyExplode,
+                pushBackForce = weapon.pushBackForce
             };
         }
     }
@@ -280,7 +286,7 @@ public class WeaponHandler : NetworkBehaviour
             }
             else
             {
-                // we hit something else that isn't a player
+                // we hit something else that wasn't a player
                 decalIdOfHitObject = hitInfo.transform.GetComponent<DecalAnchor>().decalId;
             }
         }
@@ -298,14 +304,6 @@ public class WeaponHandler : NetworkBehaviour
     [ServerRpc]
     private void HandleServerProjectileServerRpc(ulong clientTick, WeaponInfo weaponData, Vector3 clientOrigin, Vector3 clientDirection, ulong localClientId)
     {
- 
-        float tickInterval = NetworkTimer.Singleton.GetTickInterval();
-        ulong currentServerTick = NetworkTimer.Singleton.CurrentTick.Value;
-        ulong ticksPassed = currentServerTick - clientTick;
-        float timePassed = ticksPassed * tickInterval;
-
-
-
         // spawn server's projectile
 
         // override client's projectile prefab with server's
@@ -317,7 +315,7 @@ public class WeaponHandler : NetworkBehaviour
         // minor adjustment for rocket
         if (weaponData.projectileType == ProjectileType.Grenade)
         {
-            
+
             tempServerProjectilePrefab = tempServerGrenadePrefab;
         }
         else if (weaponData.projectileType == ProjectileType.Rocket)
@@ -329,32 +327,25 @@ public class WeaponHandler : NetworkBehaviour
         GameObject projectile = Instantiate(tempServerProjectilePrefab, projectileOrigin, projectileRotation);
         projectile.GetComponent<NetworkObject>().SpawnWithOwnership(localClientId);
         projectile.GetComponent<ServerProjectile>().Initialize(localClientId, weaponData.projectileMass, weaponData.projectileSpeed, weaponData.damage, weaponData.explosionRadius, weaponData.projectileGravity, weaponData.projectileType);
-
-        UpdateProjectileForClientRpc(clientTick, ticksPassed);
-    }
-
-    [ClientRpc]
-    private void UpdateProjectileForClientRpc(ulong clientTick, ulong laggedTicks)
-    {
-        // only to show visuals on the client and NOT the actual projectile because that's already in since the server
-        if (IsOwner)
-        {
-            // if (clientProjectiles.ContainsKey(clientTick))
-            // {
-            //     // destroy the client's projectile
-            //     Destroy(clientProjectiles[clientTick]);
-            //     // remove the projectile index from the dictionary
-            //     clientProjectiles.Remove(clientTick);
-            // }
-            return;
-        }
     }
 
 
     [ClientRpc]
     private void PlayFiringEffectsClientRpc(bool didHit, WeaponInfo weaponInfo, Vector3 origin, Vector3 direction, Vector3 hitPoint, Vector3 hitNormal, string decalIdOfHitObject, ClientRpcParams rpcParams = default)
     {
-        if (IsOwner) return; // Don't run visuals on your own client again
+
+
+        if (IsOwner)
+        {
+
+            // play validated effects like hitmarkers and sounds 
+            if (didHit && decalIdOfHitObject == "Player")
+            {
+                Resources.Load("ProjectMech");
+            }
+            return;
+        }
+
 
         GameObject muzzle = weaponInfo.isPrimary ? primaryMuzzleFlash : secondaryMuzzleFlash;
         
@@ -514,8 +505,6 @@ public class WeaponHandler : NetworkBehaviour
             clientProjectiles[currentTick] = Instantiate(weaponData.projectilePrefab, spawnPosition, Quaternion.LookRotation(targetDirection) * Quaternion.Euler(90f, 0, 0));
             clientProjectiles[currentTick].GetComponent<Projectile>().Initialize(weaponData.projectileMass, weaponData.projectileSpeed, weaponData.projectileGravity, weaponData.projectileType);
         }
-
-        Debug.Log($"local player id {LOCAL_CLIENT_ID}");
 
         HandleServerProjectileServerRpc(currentTick, WeaponInfo.FromWeapon(weaponData), spawnPosition, targetDirection, LOCAL_CLIENT_ID);
 
@@ -767,8 +756,6 @@ public class WeaponHandler : NetworkBehaviour
         Destroy(tracer);
     }
 
-
-
     public override void OnNetworkSpawn()
     {
         base.OnNetworkSpawn();
@@ -803,6 +790,9 @@ public class WeaponHandler : NetworkBehaviour
     {
 
         if (!IsOwner) return;
+
+
+        if (GetComponent<MechPlayerManager>().IsRespawning) return;
 
         // Get current tick
         currentTick = NetworkTimer.Singleton.CurrentTick.Value;

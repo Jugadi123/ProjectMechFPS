@@ -1,11 +1,10 @@
-using UnityEngine;
 using Unity.Netcode;
-using Unity.Mathematics;
-using System.Data.Common;
+using UnityEngine;
 
 public class HandleMovement : NetworkBehaviour
 {
     [Header("References")]
+    private WeaponHandler weaponHandler;
     [SerializeField] private GameObject wishDirLinePrefab;
     [SerializeField] private GameObject velocityLinePrefab;
     [SerializeField] private GameObject rotationLinePrefab;
@@ -17,7 +16,7 @@ public class HandleMovement : NetworkBehaviour
     private InputHandler inputHandler;
     private InputHandler.InputCommand currentInputCommand;
 
-    private const float TICK_INTERVAL = NetworkTimer.TickInterval;
+    private const float TICK_INTERVAL = NetworkTimer.TickInterval; // Fixed timestep value
 
     // Movement state
     public Vector3 wishDir;
@@ -29,8 +28,13 @@ public class HandleMovement : NetworkBehaviour
     public bool WantsToMove = false;
     private bool IsSprinting = false;
     public bool IsOnGround = false;
-    public bool allowJump = true; // tells us if the player is in air and has jumped
-    private bool IsJumping = false;
+    public bool IsJumping = false;
+    private bool wasJumpHeldLastTick = false;
+
+    // Double Jump state
+    private bool hasDoubleJumped = false;
+    private float doubleJumpCooldown = 0f;
+    [SerializeField] private float doubleJumpForce = 15f;
 
     // Dashing
     public bool isDashing = false;
@@ -43,29 +47,97 @@ public class HandleMovement : NetworkBehaviour
     private bool canWallJump = false;
     private Vector3 wallNormal;
     [SerializeField] private float wallGrabDeceleration = 8f; // How quickly the mech slows down when grabbing wall
-    [SerializeField] private float defaultWallJumpBoost = 12f; // Initial boost when jumping off wall
-
-    private ulong wallGrabTick = 0;
-    private const int WallGrabDelayTicks = 5;
-
+    [SerializeField] private float defaultWallJumpBoost = 10f; // Initial boost when jumping off wall
 
     // Wall jump camera effects
-    // A saved angle that changes based on which side we wall jump and rotate accordingly for camera effects
-    public Vector3 cameraBaseAngle;
     public float cameraRotateZAngle;
     public bool rotateCameraZ;
+
+    [Header("Wall Jump Settings")]
+    [SerializeField] private float wallGrabMomentumDelay = 0.15f; // Time before deceleration starts after grabbing wall
+    [SerializeField] private float wallJumpHorizontalBoost = 5f; // Additional horizontal boost when jumping off wall
+    [SerializeField] private float wallJumpVerticalBoost = 2f; // Additional vertical boost when jumping off wall
+    // Add this to the movement state variables
+    private float wallGrabTimer = 0f;
+    private bool isWallGrabDelayActive = false;
+    public bool recentlyJumpedOffWall = false;
+    private bool jumpJustPressed;
 
     private void Awake()
     {
         characterController = GetComponent<CharacterController>();
         playerNetvars = GetComponent<PlayerNetvars>();
         inputHandler = GetComponent<InputHandler>();
-
-        cameraBaseAngle = mainCamera.transform.localRotation.eulerAngles;
+        weaponHandler = GetComponent<WeaponHandler>();
     }
 
+    public override void OnNetworkSpawn()
+    {
+        if (!IsOwner) return;
+    }
+
+    public void ResetMovementState()
+    {
+        // Reset movement-related variables
+        wishDir = Vector3.zero;
+        currentVelocity = Vector3.zero;
+        horizontalVelocity = Vector3.zero;
+        currentHorizontalSpeed = 0f;
+
+        // Reset state flags
+        WantsToMove = false;
+        IsSprinting = false;
+        IsJumping = false;
+        wasJumpHeldLastTick = false;
+
+        // Reset double jump state
+        hasDoubleJumped = false;
+        doubleJumpCooldown = 0f;
+
+        // Reset dash state
+        isDashing = false;
+        dashTimer = 0f;
+        dashCooldownTimer = 0f;
+
+        // Reset wall-related state
+        isWallSliding = false;
+        canWallJump = false;
+        wallNormal = Vector3.zero;
+        wallGrabTimer = 0f;
+        isWallGrabDelayActive = false;
+        rotateCameraZ = false;
+
+        // Reset camera effects
+        cameraRotateZAngle = 0f;
+
+        // Make sure character controller is enabled
+        if (characterController != null)
+        {
+            characterController.enabled = false;
+        }
+    }
     
 
+
+    public void RunExplosionForce(Vector3 explosionDirection, float explosionMagnitude)
+    {
+        // Preserve existing horizontal velocity (additive)
+        Vector3 currentHorizontalVel = new Vector3(currentVelocity.x, 0, currentVelocity.z);
+
+        // Apply force (scaled by time to account for tick rate)
+        Vector3 impulse = explosionDirection * explosionMagnitude * TICK_INTERVAL;
+
+        // Combine forces
+        currentVelocity = new Vector3(
+            currentHorizontalVel.x + impulse.x,
+            currentVelocity.y + impulse.y,
+            currentHorizontalVel.z + impulse.z
+        );
+
+        // Cancel other movement states
+        isWallSliding = false;
+        isDashing = false;
+    }
 
     public void ApplyMovement(InputHandler.InputCommand inputCommand)
     {
@@ -78,15 +150,35 @@ public class HandleMovement : NetworkBehaviour
         horizontalVelocity = new Vector3(currentVelocity.x, 0f, currentVelocity.z);
         currentHorizontalSpeed = horizontalVelocity.magnitude;
 
+        bool jumpHeld = currentInputCommand.jump;
+
+        jumpJustPressed = jumpHeld && !wasJumpHeldLastTick;
+
+
+        // Reset double jump state if on ground or not sliding on wall
+        if (IsOnGround || recentlyJumpedOffWall)
+        {
+            hasDoubleJumped = false;
+            doubleJumpCooldown = 0f;
+            recentlyJumpedOffWall = false;
+        }
+        else if (doubleJumpCooldown > 0f)
+        {
+            doubleJumpCooldown = Mathf.Max(0f, doubleJumpCooldown - TICK_INTERVAL);
+        }
+
+
         // Reset wall states if grounded
         if (IsOnGround)
         {
             isWallSliding = false;
             canWallJump = false;
             rotateCameraZ = false;
+            wallGrabTimer = 0f;
+            isWallGrabDelayActive = false;
         }
 
-        bool dashHeld = Input.GetKey(KeyCode.C); // DASH KEY (C)
+        bool dashHeld = inputCommand.dash; // DASH KEY (C)
         bool canDash = dashHeld && WantsToMove && !isDashing && dashCooldownTimer <= 0f;
 
         // DASH logic (press C while moving)
@@ -95,30 +187,22 @@ public class HandleMovement : NetworkBehaviour
             Dash(wishDir);
         }
 
-        bool jumpHeld = currentInputCommand.jump;
-
-        bool isWallJumpTick = NetworkTimer.Singleton.CurrentTick.Value >= wallGrabTick;
-
-        if (jumpHeld && isWallSliding && canWallJump && isWallJumpTick && !IsOnGround)
+        if (jumpJustPressed)
         {
-            WallJump();
+            if (isWallSliding && canWallJump && !IsOnGround)
+            {
+                WallJump();
+            }
+            else if (IsOnGround)
+            {
+                IsJumping = true;
+            }
         }
-        // Normal jump logic
-        else if (jumpHeld && IsOnGround)
-        {
-            IsJumping = true;
 
-            // if (allowJump)
-            // {
-            //     IsJumping = true;
-            //     allowJump = false;
-            // }
-        }
-        else if (IsOnGround)
-        {
-            // reset the jump only if we are on ground
-            allowJump = true;
-        }
+        // Update for next frame
+        wasJumpHeldLastTick = jumpHeld;
+
+
 
         if (IsOnGround)
         {
@@ -148,16 +232,79 @@ public class HandleMovement : NetworkBehaviour
             if (Mathf.Abs(blocked.y) > 0.01f) currentVelocity.y = 0;
             if (Mathf.Abs(blocked.z) > 0.01f) currentVelocity.z = 0;
         }
-
-        // Debug visuals
-        // DrawDebugVector(wishDirLinePrefab, lowerBody.position - transform.forward * 0.5f, wishDir, 1f, Color.green);
-        // DrawDebugVector(velocityLinePrefab, lowerBody.position - transform.forward * 0.5f, horizontalVelocity, currentHorizontalSpeed, Color.blue);
     }
+
+    // private void ActivateThrust()
+    // {
+    //     if (!IsOnGround && !IsJumping && !isThrusting && thrustCooldownTimer <= 0f)
+    //     {
+    //         isThrusting = true;
+    //         thrustTimer = 0f;
+            
+    //         // Preserve horizontal velocity while adding vertical boost
+    //         currentVelocity.y = thrustForce;
+            
+    //         // Optional: Add a small forward boost if moving
+    //         // if (WantsToMove)
+    //         // {
+    //         //     Vector3 forwardBoost = wishDir.normalized * thrustForce * 0.3f;
+    //         //     currentVelocity.x += forwardBoost.x;
+    //         //     currentVelocity.z += forwardBoost.z;
+    //         // }
+    //     }
+    // }
+
+
+    // private void UpdateThrustState()
+    // {
+    //     // Update cooldown timer
+    //     if (thrustCooldownTimer > 0f)
+    //     {
+    //         thrustCooldownTimer -= TICK_INTERVAL;
+    //     }
+
+    //     if (!isThrusting) return;
+
+    //     thrustTimer += TICK_INTERVAL;
+
+    //     // Apply continuous thrust force during the duration
+    //     if (thrustTimer < thrustDuration)
+    //     {
+    //         currentVelocity.y += thrustForce * 0.1f * TICK_INTERVAL;
+    //     }
+    //     else
+    //     {
+    //         // End thrust
+    //         isThrusting = false;
+    //         thrustCooldownTimer = thrustCooldown;
+    //     }
+    // }
+
 
     private void RunWallSlideLogic()
     {
         // rotate camera towards wall
         rotateCameraZ = true;
+
+
+
+        // Handle wall grab delay
+        if (!isWallGrabDelayActive)
+        {
+            wallGrabTimer += TICK_INTERVAL;
+
+            if (wallGrabTimer >= wallGrabMomentumDelay)
+            {
+                isWallGrabDelayActive = true;
+                wallGrabTimer = 0f;
+            }
+            else
+            {
+                // During delay period, maintain velocity (no deceleration)
+                canWallJump = true;
+                return;
+            }
+        }
 
         // Reduce momentum gently (simulate sliding drag) after momentum window is gone
         currentVelocity = Vector3.Lerp(currentVelocity, Vector3.zero, wallGrabDeceleration * TICK_INTERVAL);
@@ -172,63 +319,73 @@ public class HandleMovement : NetworkBehaviour
         canWallJump = true; // can jump off the wall if player doesn't wanna fully stop and hang on the wall
     }
 
-
     private void WallJump()
     {
+        // Reset wall grab timers
+        recentlyJumpedOffWall = true;
+        wallGrabTimer = 0f;
+        isWallGrabDelayActive = false;
 
-        if (!canWallJump) return;
 
-        // Preserve existing momentum when jumping off quickly
-        float preservedSpeed = currentHorizontalSpeed;
-
+        // Get current horizontal velocity and speed
+        Vector3 currentHorizontalVel = horizontalVelocity;
+        
         // Jump direction logic
-        if (currentInputCommand.jump)
+        Vector3 jumpDir;
+        float jumpSpeed = defaultWallJumpBoost;
+
+        if (WantsToMove)
         {
-            Vector3 jumpDir;
-            Vector3 jumpVelocity;
-            float jumpSpeed = defaultWallJumpBoost; // default wall jump speed
+            // Case 1: Player has input direction (wishdir)
+            float angleToWall = Vector3.Angle(wishDir, -wallNormal);
 
-            if (WantsToMove)
+            if (angleToWall < 90f)
             {
-                float angleToWall = Mathf.Abs(Vector3.Angle(wishDir, -wallNormal));
-                if (angleToWall < 90f)
-                {
-                    // Jumping into wall, bounce off with fixed force
-                    jumpDir = wallNormal;
-                }
-                else
-                {
-                    // Jumping away, use current velocity to leap off if not less than the minimum jump velocity
+                // Case 1a: Trying to jump into wall - just use the reflected velocity to never halt the momentum
+                jumpDir = Vector3.Reflect(currentHorizontalVel.normalized, wallNormal).normalized;
 
-                    jumpDir = wishDir.normalized;
-
-                    if (preservedSpeed > defaultWallJumpBoost)
-                    {
-                        jumpSpeed = preservedSpeed * 1.2f; // add a little bit of boost on the existing momentum
-                    }
-                }
+                jumpSpeed = Mathf.Max(jumpSpeed, currentHorizontalSpeed * 1.4f);
             }
             else
             {
-                // Default push off
-                jumpDir = wallNormal;
+                // Case 1b: Trying to jump away from wall - use wishdir
+                jumpDir = wishDir;
+
+                // Boost speed based on current velocity
+                jumpSpeed = Mathf.Max(jumpSpeed, currentHorizontalSpeed * 1.4f);
             }
-
-            // reset state
-            isWallSliding = false;
-            canWallJump = false;
-            rotateCameraZ = false;
-
-            // get final jump velocity
-            jumpVelocity = new Vector3(jumpDir.x, 0f, jumpDir.z) * jumpSpeed;
-            float wallJumpHeight = playerNetvars.jumpHeight.Value * 0.6f;
-            currentVelocity = new Vector3(jumpVelocity.x, wallJumpHeight, jumpVelocity.z); // use a different value for the jump height off the wall
         }
+        else if (currentHorizontalSpeed > playerNetvars.maxWalkSpeed.Value)
+        {
+            // Case 2: No input but has momentum - bounce off wall while preserving speed based on reflected velocity
+            jumpDir = Vector3.Reflect(currentHorizontalVel.normalized, wallNormal).normalized;
+
+            jumpSpeed = Mathf.Max(jumpSpeed, currentHorizontalSpeed * 1.4f);
+        }
+        else
+        {
+            // Case 3: Default push off straight from wall
+            jumpDir = wallNormal;
+        }
+
+        // Calculate final jump velocity
+        Vector3 jumpVelocity = jumpDir * jumpSpeed;
+        float wallJumpHeight = playerNetvars.jumpHeight.Value * 0.6f;
+
+        // Apply velocity
+        currentVelocity = new Vector3(jumpVelocity.x, wallJumpHeight, jumpVelocity.z);
+
+        // Reset state
+        isWallSliding = false;
+        canWallJump = false;
+        rotateCameraZ = false;
     }
 
     private void RunGroundLogic()
     {
+
         if (isDashing) return;
+        
 
         if (WantsToMove)
         {
@@ -245,7 +402,7 @@ public class HandleMovement : NetworkBehaviour
 
         if (IsJumping)
         {
-            float jumpChainCapSpeed = 10f; // max allowed speed if we jump with the exception of our current momentum being greater than this value
+            float jumpChainCapSpeed = playerNetvars.maxSprintSpeed.Value; // max allowed speed if we jump with the exception of our current momentum being greater than this value
             float allowedSpeed = currentHorizontalSpeed; // default speed is current speed (no change in velocity)
             Vector3 jumpDir = WantsToMove ? wishDir.normalized : horizontalVelocity.normalized; // default direction is current velocity if no input is detected. Otherwise use the wish dir
 
@@ -274,60 +431,38 @@ public class HandleMovement : NetworkBehaviour
     private void RunAirborneLogic()
     {
         if (isDashing) return;
+       
+        // Handle double jump
+        if (jumpJustPressed && !hasDoubleJumped && !IsOnGround && !isWallSliding)
+        {
+            hasDoubleJumped = true;
+            doubleJumpCooldown = 0.5f; // Cooldown before allowing another double jump
+            currentVelocity.y = doubleJumpForce;
+        }
 
+        // Apply gravity
         currentVelocity.y += playerNetvars.gravity.Value * TICK_INTERVAL * 3f;
 
-        // Get current horizontal velocity
         Vector3 currentHorizontalVel = new Vector3(currentVelocity.x, 0, currentVelocity.z);
-        float currentSpeed = Mathf.Min(currentHorizontalVel.magnitude, playerNetvars.maxAirSpeed.Value);
         
-        if (currentSpeed > 1f)
+        if (WantsToMove)
         {
-            if (WantsToMove)
+            // Calculate acceleration with TICK_INTERVAL
+            Vector3 velocityChange = wishDir * (playerNetvars.airAcceleration.Value * TICK_INTERVAL);
+            
+            // Apply velocity change
+            currentHorizontalVel += velocityChange;
+            
+            // Clamp to max air speed
+            float currentSpeed = currentHorizontalVel.magnitude;
+            if (currentSpeed > playerNetvars.maxAirSpeed.Value)
             {
-                // Calculate angle between current velocity and wish direction
-                float angle = Vector3.Angle(currentHorizontalVel, wishDir);
-
-                float placeholderAirAcceleration = 0.8f;
-
-                // If trying to change direction too aggressively, slow down
-                if (angle > 120f)
-                {
-                    // Apply braking force for sharp turns
-                    currentHorizontalVel = Vector3.Lerp(
-                        currentHorizontalVel,
-                        Vector3.zero,
-                        placeholderAirAcceleration * TICK_INTERVAL * 2f
-                    );
-                }
-                else
-                {
-                    // Directly lerp toward wish direction while maintaining speed
-                    currentHorizontalVel = Vector3.Lerp(
-                        currentHorizontalVel,
-                        wishDir.normalized * currentSpeed,
-                        placeholderAirAcceleration * TICK_INTERVAL
-                    );
-                }
-            }
-            else
-            {
-                // No input - maintain current velocity (only gravity affects it)
-                // Optional: add slight deceleration if desired
-                // currentHorizontalVel = Vector3.Lerp(
-                //     currentHorizontalVel,
-                //     Vector3.zero,
-                //     placeholderAirAcceleration * TICK_INTERVAL * 0.4f
-                // );
+                currentHorizontalVel = currentHorizontalVel.normalized * playerNetvars.maxAirSpeed.Value;
             }
         }
-        else if (WantsToMove)
-        {
-            // If stationary but wanting to move, start moving in wish direction
-            currentHorizontalVel = wishDir.normalized * playerNetvars.minAirSpeed.Value;
-        }
+        // else - no input means maintain current velocity
 
-        // Apply back to velocity
+        // Apply back to velocity (preserve Y)
         currentVelocity.x = currentHorizontalVel.x;
         currentVelocity.z = currentHorizontalVel.z;
     }
@@ -359,22 +494,24 @@ public class HandleMovement : NetworkBehaviour
         dashTimer = 0f;
         dashDirection = direction.normalized;
 
-        // dash using the normal dash speed unless
-        // the current horizontal velocity is more than the minimum air velocity
-        // in that case, allow the player to dash with their momentum (allows chaining)
+        // preserve existing momentum
+        Vector3 currentHorizontalVel = horizontalVelocity;
+        float currentSpeed = currentHorizontalVel.magnitude;
         float dashSpeed = playerNetvars.dashSpeed.Value;
+
+        // get the dash direction's magnitude based on if the player's current velocity is greater than the max air velocity using math.min
+        float dashDirectionMagnitude = Mathf.Min(currentSpeed + dashSpeed, playerNetvars.maxAirSpeed.Value);
 
         // Set initial dash velocity (preserve existing vertical velocity)
         currentVelocity = new Vector3(
-            dashDirection.x * dashSpeed,
+            dashDirection.x * dashDirectionMagnitude,
             currentVelocity.y, // Keep existing vertical velocity
-            dashDirection.z * dashSpeed
+            dashDirection.z * dashDirectionMagnitude
         );
     }
 
     public void DrawDebugVector(GameObject linePrefab, Vector3 origin, Vector3 direction, float length, Color color, bool render = true)
     {
-        if (!IsOwner) return;
         LineRenderer line = linePrefab.GetComponent<LineRenderer>();
         line.SetPosition(0, origin);
         line.SetPosition(1, origin + direction.normalized * length);
@@ -384,28 +521,12 @@ public class HandleMovement : NetworkBehaviour
         line.enabled = render;
     }
 
-
-    private void RunWallJumpCameraEffects(bool canRotate, float targetZRotation)
-    {
-        // Default rotation is the base camera rotation
-        Vector3 target = cameraBaseAngle;
-
-        // apply Z rotation
-        if (canRotate)
-        {
-            target = new(cameraBaseAngle.x, cameraBaseAngle.y, targetZRotation);
-        }
-
-        mainCamera.transform.localRotation = Quaternion.Lerp(mainCamera.transform.localRotation, Quaternion.Euler(target), Time.deltaTime * 2f);
-    }
-
     private void Update()
     {
         if (!IsOwner) return;
-        currentInputCommand = inputHandler.GetCurrentInputCommand();
-        RunWallJumpCameraEffects(rotateCameraZ, cameraRotateZAngle);
-    }
 
+        currentInputCommand = inputHandler.GetCurrentInputCommand();
+    }
 
     private Vector3 previousPosition;
 
@@ -413,50 +534,70 @@ public class HandleMovement : NetworkBehaviour
     {
         if (!IsOwner) return;
 
-        UpdateDashState();
 
+        // Skip movement if respawning
+        if (GetComponent<MechPlayerManager>().IsRespawning)
+        {
+            currentVelocity = Vector3.zero;
+            return;
+        }
+
+        UpdateDashState();
         DetectWalls();
 
         // save last position before movement for collision detection
         previousPosition = transform.position;
-        
-        ApplyMovement(currentInputCommand);
 
+        ApplyMovement(currentInputCommand);
     }
 
-
     [SerializeField] private float wallCheckDistance = 1.5f;
+    [SerializeField] private float wallCheckRayOffset = 0.4f;
+    [SerializeField] private float wallCheckRayAngle = 25f;
     [SerializeField] private LayerMask wallLayer;
 
-
-    // wall detection
-
-
-    private bool canSaveWallGrabTick = true;
     private void DetectWalls()
     {
-        Debug.DrawRay(transform.position, Quaternion.Euler(0, 35f, 0) * -transform.right * wallCheckDistance, Color.blue);
-        Debug.DrawRay(transform.position, Quaternion.Euler(0, -35f, 0) * transform.right * wallCheckDistance, Color.blue);
+        // Side wall checks (left/right)
+        Vector3 rayLeftOrigin = transform.position + (transform.right * wallCheckRayOffset);
+        Vector3 rayRightOrigin = transform.position + (-transform.right * wallCheckRayOffset);
+        Vector3 rayBackOrigin = transform.position; // Back check origin (center of player)
+
+        Vector3 rayLeftDirection = Quaternion.Euler(0, -wallCheckRayAngle, 0) * transform.right;
+        Vector3 rayRightDirection = Quaternion.Euler(0, wallCheckRayAngle, 0) * -transform.right;
+        Vector3 rayBackDirection = transform.forward; // backward
+
+        RaycastHit hitLeft;
+        RaycastHit hitRight;
+        RaycastHit hitBack;
+
+        bool wallOnLeft = Physics.Raycast(rayLeftOrigin, rayLeftDirection, out hitLeft, wallCheckDistance, wallLayer);
+        bool wallOnRight = Physics.Raycast(rayRightOrigin, rayRightDirection, out hitRight, wallCheckDistance, wallLayer);
+        bool wallOnBack = Physics.Raycast(rayBackOrigin, rayBackDirection, out hitBack, wallCheckDistance, wallLayer);
+
+        // Debugging rays
+        Debug.DrawRay(rayLeftOrigin, rayLeftDirection * wallCheckDistance, Color.blue);
+        Debug.DrawRay(rayRightOrigin, rayRightDirection * wallCheckDistance, Color.blue);
+        Debug.DrawRay(rayBackOrigin, rayBackDirection * wallCheckDistance, Color.red); // Back ray in red
         Debug.DrawRay(transform.position, wishDir * 1f, Color.green);
 
         if (IsOnGround) return;
 
-        Vector3 origin = transform.position;
-        Vector3 left = Quaternion.Euler(0, -35f, 0) * transform.right;
-        Vector3 right = Quaternion.Euler(0, 35f, 0) * -transform.right;
-
-        RaycastHit hitLeft;
-        RaycastHit hitRight;
-
-        bool wallOnLeft = Physics.Raycast(origin, left, out hitLeft, wallCheckDistance, wallLayer);
-        bool wallOnRight = Physics.Raycast(origin, right, out hitRight, wallCheckDistance, wallLayer);
-
-        if (wallOnLeft || wallOnRight)
+        // Check for any wall collision (left, right, or Back)
+        if (wallOnLeft || wallOnRight || wallOnBack)
         {
-            cameraRotateZAngle = wallOnLeft ? -60f : 60f;
+            // Determine which wall was hit
+            RaycastHit hit = wallOnBack ? hitBack : (wallOnLeft ? hitLeft : hitRight);
+            string structureTag = hit.transform.tag;
 
-            Vector3 normal = wallOnLeft ? hitLeft.normal : hitRight.normal; // get appropriate wall normal
+            if (structureTag != "GrabbleStructure") return;
 
+            // Set camera tilt based on wall side (no tilt for Back walls)
+            cameraRotateZAngle = wallOnLeft ? -60f : (wallOnRight ? 60f : 0f);
+
+            Vector3 normal = hit.normal;
+
+            // Check if approaching the wall at a valid angle
             float angleToWallFromWishDir = Mathf.Abs(Vector3.SignedAngle(wishDir.normalized, normal, Vector3.up));
             float angleToWallFromVelocity = Mathf.Abs(Vector3.SignedAngle(horizontalVelocity.normalized, normal, Vector3.up));
 
@@ -466,19 +607,12 @@ public class HandleMovement : NetworkBehaviour
             {
                 wallNormal = normal;
                 isWallSliding = true;
-
-                if (canSaveWallGrabTick)
-                {
-                    wallGrabTick = NetworkTimer.Singleton.CurrentTick.Value + WallGrabDelayTicks;
-                    canSaveWallGrabTick = false;
-                }
             }
             else
             {
                 isWallSliding = false;
                 canWallJump = false;
                 rotateCameraZ = false;
-                canSaveWallGrabTick = true;
             }
         }
         else
@@ -486,7 +620,6 @@ public class HandleMovement : NetworkBehaviour
             isWallSliding = false;
             canWallJump = false;
             rotateCameraZ = false;
-            canSaveWallGrabTick = true;
         }
     }
 }

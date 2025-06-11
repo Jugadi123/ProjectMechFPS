@@ -51,9 +51,9 @@ public class ServerProjectile : NetworkBehaviour
         if (IsOwner)
         {
             // "hide" the projectile for the firing client
-            GetComponent<MeshRenderer>().enabled = false;
+            // GetComponent<MeshRenderer>().enabled = false;
 
-            
+
         }
     }
 
@@ -97,57 +97,94 @@ public class ServerProjectile : NetworkBehaviour
 
     private void OnCollisionEnter(Collision collision)
     {
-
         if (!IsServer) return;
 
-        if (projectileType == ProjectileType.Grenade)
+        Vector3 explosionPos = transform.position;
+
+        // Damage logic (existing, only affects direct hits)
+        if (collision.transform.CompareTag("Player"))
         {
-            if (collision.transform.CompareTag("Player"))
+            NetworkObject player = collision.collider.GetComponent<NetworkObject>();
+            player.GetComponent<HandleHealth>().TakeDamage(projectileDamage, localClientId);
+        }
+
+        // Explosion physics (new)
+        if (projectileType == ProjectileType.Rocket)
+        {
+            // Get all players in blast radius (excluding yourself if desired)
+            Collider[] hits = Physics.OverlapSphere(explosionPos, projectileExplosionRadius, LayerMask.GetMask("Player"));
+
+            foreach (Collider hit in hits)
             {
-                // get the player's id
-                NetworkObject collidedPlayer = collision.collider.GetComponent<NetworkObject>();
-
-                // get the id of the enemy player
-                ulong collidedPlayerId = collidedPlayer.OwnerClientId;
-
-                // if (collidedPlayerId == localClientId) return;
-
-                // take damage
-                collidedPlayer.GetComponent<HandleHealth>().TakeDamage(projectileDamage, localClientId);
-
-                NetworkObject.Despawn(gameObject);
-                return;
+                NetworkObject playerObj = hit.GetComponent<NetworkObject>();
+                if (playerObj != null && playerObj.OwnerClientId != localClientId) // Optional: exclude self
+                {
+                    ApplyExplosionForceClientRpc(
+                        playerObj.OwnerClientId,
+                        explosionPos,
+                        projectileExplosionRadius,
+                        projectileDamage * 0.8f // Scale force separately from damage
+                    );
+                }
             }
 
-            // handle grenade damage
-            projectileBounces++;
-            if (projectileBounces >= 1)
+            // Always apply self-knockback if within radius
+            if (Vector3.Distance(explosionPos, NetworkManager.Singleton.ConnectedClients[localClientId].PlayerObject.transform.position) <= projectileExplosionRadius)
             {
-              
+                ApplyExplosionForceClientRpc(
+                    localClientId,
+                    explosionPos,
+                    projectileExplosionRadius,
+                    projectileDamage * 1.2f // Stronger self-knockback
+                );
             }
         }
-        else if (projectileType == ProjectileType.Rocket)
+
+        NetworkObject.Despawn(gameObject);
+    }
+
+
+    [ClientRpc]
+    private void ApplyExplosionForceClientRpc(ulong firingClientId, Vector3 explosionPos, float radius, float maxForce)
+    {
+        if (!IsOwner || OwnerClientId != firingClientId) return;
+
+        Vector3 playerPos = transform.position;
+        float distance = Vector3.Distance(explosionPos, playerPos);
+
+        // Calculate spherical force direction (away from explosion center)
+        Vector3 forceDir = (playerPos - explosionPos).normalized;
+        
+        // Inverse-square falloff (stronger near center)
+        float forcePercent = 1 - Mathf.Clamp01(distance / radius);
+        float actualForce = maxForce * forcePercent * forcePercent; // Quadratic falloff
+
+        NetworkObject firingPlayer = NetworkManager.Singleton.ConnectedClients[firingClientId].PlayerObject;
+
+        firingPlayer.GetComponent<HandleMovement>().RunExplosionForce(forceDir, actualForce);
+
+
+        // DebugDrawExplosion(explosionPos, radius, 5f);
+    }
+    
+
+
+    void DebugDrawExplosion(Vector3 center, float radius, float duration)
+    {
+        // Draw explosion radius
+        Debug.DrawRay(center, Vector3.up * radius, Color.yellow, duration);
+        Debug.DrawRay(center, Vector3.down * radius, Color.yellow, duration);
+        Debug.DrawRay(center, Vector3.left * radius, Color.yellow, duration);
+        Debug.DrawRay(center, Vector3.right * radius, Color.yellow, duration);
+        Debug.DrawRay(center, Vector3.forward * radius, Color.yellow, duration);
+        Debug.DrawRay(center, Vector3.back * radius, Color.yellow, duration);
+
+        // Draw sample force directions (8 cardinal directions)
+        for (int i = 0; i < 8; i++)
         {
-            if (collision.transform.CompareTag("Player"))
-            {
-                // get the player's id
-                NetworkObject collidedPlayer = collision.collider.GetComponent<NetworkObject>();
-
-                // get the id of the enemy player
-                ulong collidedPlayerId = collidedPlayer.OwnerClientId;
-
-                // take damage
-                collidedPlayer.GetComponent<HandleHealth>().TakeDamage(projectileDamage, localClientId);
-
-
-
-                Debug.Log("Collided with player " + collidedPlayerId);
-
-                NetworkObject.Despawn(gameObject);
-                return;
-            }
-
-            NetworkObject.Despawn(gameObject);
+            float angle = i * Mathf.PI * 0.25f;
+            Vector3 dir = new Vector3(Mathf.Cos(angle), 0.3f, Mathf.Sin(angle)).normalized;
+            Debug.DrawRay(center, dir * radius, Color.red, duration);
         }
     }
 }

@@ -29,7 +29,7 @@ public class PlayerNetvars : NetworkBehaviour
     // acceleration
     public NetworkVariable<float> acceleration = new NetworkVariable<float>(20f, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
     // air acceleration
-    public NetworkVariable<float> airAcceleration = new NetworkVariable<float>(1.2f, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
+    public NetworkVariable<float> airAcceleration = new NetworkVariable<float>(4f, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
     // deceleration
     public NetworkVariable<float> friction = new NetworkVariable<float>(6f, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
     // gravity
@@ -56,9 +56,6 @@ public class PlayerNetvars : NetworkBehaviour
     public NetworkVariable<float> dashCooldown = new NetworkVariable<float>(0.5f, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
     // dash duration
     public NetworkVariable<float> dashDuration = new NetworkVariable<float>(0.3f, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
-    // Thruster Force
-    public NetworkVariable<float> thrusterForce = new NetworkVariable<float>(40f, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
-
 
 
     // Momentum jumping

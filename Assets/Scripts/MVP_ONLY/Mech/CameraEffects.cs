@@ -1,14 +1,13 @@
 using System.Collections;
 using UnityEngine;
-using Unity.Netcode;
-public class CameraEffects : NetworkBehaviour
+public class CameraEffects : MonoBehaviour
 {
     [SerializeField] Camera playerCamera; 
     [SerializeField] Camera playerCockpitCamera;
     [SerializeField] GameObject playerCockpitMesh;
 
-    private Transform primaryWeapon; // get dynamically
-    private Transform secondaryWeapon; // get dynamically
+    // private Transform primaryWeapon; // get dynamically
+    // private Transform secondaryWeapon; // get dynamically
 
     public bool allowRotate = true;
 
@@ -23,25 +22,18 @@ public class CameraEffects : NetworkBehaviour
 
     private HandleMovement movementHandler;
 
-    public override void OnNetworkSpawn()
+    private void Awake()
     {
         movementHandler = GetComponent<HandleMovement>();
         InitializeDefaults();
-        SetupWeapons();
     }
 
     private void InitializeDefaults()
     {
         defaultPos = Vector3.zero;
-        defaultRotation = new Vector3(0, 180, 0);
+        defaultRotation = playerCamera.transform.rotation.eulerAngles;
         bobAmount = 0.3f;
         bobSpeed = 10f;
-    }
-
-    private void SetupWeapons()
-    {
-        primaryWeapon = transform.GetChild(0).GetChild(1).GetChild(0);
-        secondaryWeapon = transform.GetChild(0).GetChild(1).GetChild(1);
     }
 
 
@@ -83,7 +75,7 @@ public class CameraEffects : NetworkBehaviour
 
     private void HandleThrustingEffects()
     {
-        if (movementHandler.allowJump) return;
+        if (movementHandler.IsJumping) return;
 
         Vector3 fromCockpit = defaultRotation;
         // downward cockpit rotation
@@ -153,10 +145,34 @@ public class CameraEffects : NetworkBehaviour
         }
     }
 
+
+
+    private void RunWallJumpCameraEffects(bool canRotate, float targetZRotation)
+    {
+        // Default rotation is the base camera rotation
+        Vector3 target = defaultRotation;
+
+        // apply Z rotation
+        if (canRotate)
+        {
+            target = new Vector3(defaultRotation.x, defaultRotation.y, targetZRotation);
+        }
+
+        playerCamera.transform.localRotation = Quaternion.Lerp(playerCamera.transform.localRotation, Quaternion.Euler(target), Time.deltaTime * 2f);
+
+        // Cockpit camera always returns to default rotation (gyro-stabilized)
+        // playerCockpitCamera.transform.localRotation = Quaternion.Lerp(
+        //     playerCockpitCamera.transform.localRotation,
+        //     Quaternion.Euler(defaultRotation),
+        //     Time.deltaTime * 2f
+        // );
+
+    }
+
     void Update()
     {
-        if (!IsOwner) return;
         sprintButton = Input.GetKey(KeyCode.LeftShift);
+        RunWallJumpCameraEffects(movementHandler.rotateCameraZ, movementHandler.cameraRotateZAngle);
         HandleThrustingEffects();
         HandleLandingShake();
         HandleWalkingBobbing();

@@ -36,8 +36,9 @@ MonoBehaviour:
   projectileType: 2
   projectilePrefab: {fileID: 7126355240600540162, guid: 9ab6349b1ea1544bab9bf405ddfe5ef6, type: 3}
   projectileMass: 0.7
-  projectileSpeed: 8
+  projectileSpeed: 13.07
   projectileGravity: 0
-  explosionRadius: 0
+  explosionRadius: 3.52
   firstBounchExplosionExpiryTime: 0
   timeBeforeCanManuallyExplode: 0
+  pushBackForce: 2.98
