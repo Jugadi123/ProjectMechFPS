@@ -326,6 +326,8 @@ public class HandleMovement : NetworkBehaviour
         wallGrabTimer = 0f;
         isWallGrabDelayActive = false;
 
+        // Reset Y velocity to ensure no jump/double jump logic affects it
+        currentVelocity.y = 0f;
 
         // Get current horizontal velocity and speed
         Vector3 currentHorizontalVel = horizontalVelocity;
@@ -368,12 +370,19 @@ public class HandleMovement : NetworkBehaviour
             jumpDir = wallNormal;
         }
 
-        // Calculate final jump velocity
+        // Calculate final jump velocity and ensure it doesn't exceed max air speed
         Vector3 jumpVelocity = jumpDir * jumpSpeed;
         float wallJumpHeight = playerNetvars.jumpHeight.Value * 0.6f;
 
+        // Cap the horizontal speed to maxAirSpeed
+        Vector3 jumpHorizontalVelocity = new Vector3(jumpVelocity.x, 0, jumpVelocity.z);
+        if (jumpHorizontalVelocity.magnitude > playerNetvars.maxAirSpeed.Value)
+        {
+            jumpHorizontalVelocity = jumpHorizontalVelocity.normalized * playerNetvars.maxAirSpeed.Value;
+        }
+
         // Apply velocity
-        currentVelocity = new Vector3(jumpVelocity.x, wallJumpHeight, jumpVelocity.z);
+        currentVelocity = new Vector3(jumpHorizontalVelocity.x, wallJumpHeight, jumpHorizontalVelocity.z);
 
         // Reset state
         isWallSliding = false;
@@ -432,8 +441,8 @@ public class HandleMovement : NetworkBehaviour
     {
         if (isDashing) return;
        
-        // Handle double jump
-        if (jumpJustPressed && !hasDoubleJumped && !IsOnGround && !isWallSliding)
+        // Skip double jump logic if wall sliding
+        if (!isWallSliding && jumpJustPressed && !hasDoubleJumped && !IsOnGround)
         {
             hasDoubleJumped = true;
             doubleJumpCooldown = 0.5f; // Cooldown before allowing another double jump
@@ -443,28 +452,45 @@ public class HandleMovement : NetworkBehaviour
         // Apply gravity
         currentVelocity.y += playerNetvars.gravity.Value * TICK_INTERVAL * 3f;
 
-        Vector3 currentHorizontalVel = new Vector3(currentVelocity.x, 0, currentVelocity.z);
-        
+
         if (WantsToMove)
         {
-            // Calculate acceleration with TICK_INTERVAL
-            Vector3 velocityChange = wishDir * (playerNetvars.airAcceleration.Value * TICK_INTERVAL);
+            // Get current horizontal velocity
+            Vector3 horizontalVelocity = new Vector3(currentVelocity.x, 0, currentVelocity.z);
+            float currentSpeed = horizontalVelocity.magnitude;
             
-            // Apply velocity change
-            currentHorizontalVel += velocityChange;
+            // Get target direction and speed
+            Vector3 targetDirection = wishDir.normalized;
+            float targetSpeed = Mathf.Min(currentSpeed, playerNetvars.maxAirSpeed.Value);
             
-            // Clamp to max air speed
-            float currentSpeed = currentHorizontalVel.magnitude;
-            if (currentSpeed > playerNetvars.maxAirSpeed.Value)
+            // Only apply air control if we have some speed
+            if (currentSpeed > 1f)
             {
-                currentHorizontalVel = currentHorizontalVel.normalized * playerNetvars.maxAirSpeed.Value;
+                // Calculate how much we can turn based on air control and frame time
+                float turnAngle = Vector3.Angle(horizontalVelocity.normalized, targetDirection);
+                float turnRate = playerNetvars.airAcceleration.Value * TICK_INTERVAL;
+                float turnAmount = Mathf.Min(turnAngle, turnRate * 10f); // Cap turn rate at 90 degrees per second
+                
+                // Get the new direction by rotating towards target
+                Vector3 newDirection = Vector3.RotateTowards(
+                    horizontalVelocity.normalized, 
+                    targetDirection, 
+                    turnAmount * Mathf.Deg2Rad, 
+                    0f);
+                
+                // Apply the new direction while maintaining speed
+                Vector3 newVelocity = newDirection * currentSpeed;
+                currentVelocity.x = newVelocity.x;
+                currentVelocity.z = newVelocity.z;
+            }
+            
+            // If we're moving very slowly, just snap to the target direction
+            if (currentSpeed < 1f)
+            {
+                currentVelocity.x = targetDirection.x * playerNetvars.maxWalkSpeed.Value;
+                currentVelocity.z = targetDirection.z * playerNetvars.maxWalkSpeed.Value;
             }
         }
-        // else - no input means maintain current velocity
-
-        // Apply back to velocity (preserve Y)
-        currentVelocity.x = currentHorizontalVel.x;
-        currentVelocity.z = currentHorizontalVel.z;
     }
 
     private void UpdateDashState()

@@ -29,7 +29,7 @@ public class PlayerNetvars : NetworkBehaviour
     // acceleration
     public NetworkVariable<float> acceleration = new NetworkVariable<float>(20f, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
     // air acceleration
-    public NetworkVariable<float> airAcceleration = new NetworkVariable<float>(4f, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
+    public NetworkVariable<float> airAcceleration = new NetworkVariable<float>(10f, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
     // deceleration
     public NetworkVariable<float> friction = new NetworkVariable<float>(6f, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
     // gravity

@@ -27631,8 +27631,8 @@ GameObject:
   - component: {fileID: 172923921517177751}
   - component: {fileID: 7116911348372394817}
   - component: {fileID: -926748588570776574}
-  - component: {fileID: -3661041067203207919}
   - component: {fileID: 8273828170665020208}
+  - component: {fileID: 8083475914739193048}
   m_Layer: 6
   m_Name: player
   m_TagString: Player
@@ -27649,7 +27649,7 @@ Transform:
   m_GameObject: {fileID: 8882107188300453232}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 4.239, z: -2.577}
+  m_LocalPosition: {x: 223.38, y: 10.47, z: -158.49}
   m_LocalScale: {x: 2, y: 2, z: 2}
   m_ConstrainProportionsScale: 1
   m_Children:
@@ -27972,6 +27972,7 @@ MonoBehaviour:
   WantsToMove: 0
   IsOnGround: 0
   IsJumping: 0
+  doubleJumpForce: 15
   isDashing: 0
   wallGrabDeceleration: 1
   defaultWallJumpBoost: 12
@@ -27980,74 +27981,13 @@ MonoBehaviour:
   wallGrabMomentumDelay: 0.15
   wallJumpHorizontalBoost: 8
   wallJumpVerticalBoost: 1.4
-  thrustForce: 20
-  thrustDuration: 0.8
-  thrustCooldown: 1
+  recentlyJumpedOffWall: 0
   wallCheckDistance: 1.2
   wallCheckRayOffset: 0.4
   wallCheckRayAngle: 25
   wallLayer:
     serializedVersion: 2
     m_Bits: 2048
---- !u!114 &-3661041067203207919
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8882107188300453232}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e7da923609b35400b91a0f61c256ef14, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  ShowTopMostFoldoutHeaderGroup: 1
-  isAlive:
-    m_InternalValue: 1
-  health:
-    m_InternalValue: 100
-  maxWalkSpeed:
-    m_InternalValue: 5
-  maxSprintSpeed:
-    m_InternalValue: 12
-  dashSpeed:
-    m_InternalValue: 35
-  minAirSpeed:
-    m_InternalValue: 5
-  maxAirSpeed:
-    m_InternalValue: 40
-  acceleration:
-    m_InternalValue: 20
-  airAcceleration:
-    m_InternalValue: 1.2
-  friction:
-    m_InternalValue: 6
-  gravity:
-    m_InternalValue: -7
-  fuelMax:
-    m_InternalValue: 100
-  fuelRegenRate:
-    m_InternalValue: 50
-  fuelRegenDelay:
-    m_InternalValue: 2
-  thrusterFuelUsage:
-    m_InternalValue: 50
-  sprintingFuelUsage:
-    m_InternalValue: 10
-  fuel:
-    m_InternalValue: 100
-  IsFuelOnCooldown:
-    m_InternalValue: 0
-  dashCooldown:
-    m_InternalValue: 0.5
-  dashDuration:
-    m_InternalValue: 0.3
-  jumpHeight:
-    m_InternalValue: 14
-  jumpVelocityMultiplier:
-    m_InternalValue: 1.3
-  stickToGroundForce:
-    m_InternalValue: -2
 --- !u!114 &8273828170665020208
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -28095,6 +28035,65 @@ MonoBehaviour:
   Interpolate: 0
   SlerpPosition: 0
   StaleDataHandling: 1
+--- !u!114 &8083475914739193048
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8882107188300453232}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e7da923609b35400b91a0f61c256ef14, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ShowTopMostFoldoutHeaderGroup: 1
+  isAlive:
+    m_InternalValue: 1
+  health:
+    m_InternalValue: 100
+  maxWalkSpeed:
+    m_InternalValue: 5
+  maxSprintSpeed:
+    m_InternalValue: 12
+  dashSpeed:
+    m_InternalValue: 35
+  minAirSpeed:
+    m_InternalValue: 5
+  maxAirSpeed:
+    m_InternalValue: 40
+  acceleration:
+    m_InternalValue: 20
+  airAcceleration:
+    m_InternalValue: 10
+  friction:
+    m_InternalValue: 6
+  gravity:
+    m_InternalValue: -7
+  fuelMax:
+    m_InternalValue: 100
+  fuelRegenRate:
+    m_InternalValue: 50
+  fuelRegenDelay:
+    m_InternalValue: 2
+  thrusterFuelUsage:
+    m_InternalValue: 50
+  sprintingFuelUsage:
+    m_InternalValue: 10
+  fuel:
+    m_InternalValue: 100
+  IsFuelOnCooldown:
+    m_InternalValue: 0
+  dashCooldown:
+    m_InternalValue: 0.5
+  dashDuration:
+    m_InternalValue: 0.3
+  jumpHeight:
+    m_InternalValue: 14
+  jumpVelocityMultiplier:
+    m_InternalValue: 1.3
+  stickToGroundForce:
+    m_InternalValue: -2
 --- !u!1 &8985906505551546294
 GameObject:
   m_ObjectHideFlags: 0
